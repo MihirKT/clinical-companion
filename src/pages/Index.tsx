@@ -1,13 +1,39 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import React from 'react';
+import { MainLayout } from '@/components/layout/MainLayout';
+import { useWorkflow } from '@/context/WorkflowContext';
+import { CapturePage } from './CapturePage';
+import { ReviewPage } from './ReviewPage';
+import { SummarizePage } from './SummarizePage';
+import { PatientHubPage } from './PatientHubPage';
+import { PatientDemographicsPage } from './PatientDemographicsPage';
+import { CorrectionsPage } from './CorrectionsPage';
 
 const Index = () => {
+  const { currentStep } = useWorkflow();
+
+  const renderStep = () => {
+    switch (currentStep) {
+      case 'capture':
+        return <CapturePage />;
+      case 'review':
+        return <ReviewPage />;
+      case 'summarize':
+        return <SummarizePage />;
+      case 'patient-hub':
+        return <PatientHubPage />;
+      case 'demographics':
+        return <PatientDemographicsPage />;
+      case 'corrections':
+        return <CorrectionsPage />;
+      default:
+        return <CapturePage />;
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
-    </div>
+    <MainLayout>
+      {renderStep()}
+    </MainLayout>
   );
 };
 
