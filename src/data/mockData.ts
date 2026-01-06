@@ -283,6 +283,89 @@ export const mockMedications: Medication[] = [
   { id: 'm5', name: 'Glipizide', dosage: '5mg', frequency: 'Once daily', startDate: new Date('2019-08-01'), endDate: new Date('2020-03-15'), active: false },
 ];
 
+// Previous Summaries
+export interface PreviousSummary {
+  id: string;
+  patientId: string;
+  patientName: string;
+  type: 'soap' | 'discharge' | 'referral' | 'progress' | 'custom';
+  title: string;
+  content: string;
+  createdAt: Date;
+}
+
+export const mockPreviousSummaries: PreviousSummary[] = [
+  {
+    id: 'sum1',
+    patientId: 'p1',
+    patientName: 'Sarah Johnson',
+    type: 'soap',
+    title: 'SOAP Note - Diabetic Follow-up',
+    content: `SUBJECTIVE:
+Mrs. Sarah Johnson, a 45-year-old female with a history of Type 2 Diabetes Mellitus, presents for follow-up. She reports new-onset tingling sensation in bilateral feet for approximately 2 weeks.
+
+OBJECTIVE:
+Vital signs: BP 128/82, HR 72, Temp 36.8°C
+Foot examination: Decreased sensation to monofilament testing bilaterally
+
+ASSESSMENT:
+1. Type 2 Diabetes Mellitus - on Metformin
+2. New-onset diabetic peripheral neuropathy
+
+PLAN:
+1. Order HbA1c to assess glycemic control
+2. Order serum B12 level
+3. Follow-up in 4 weeks`,
+    createdAt: new Date('2024-01-15'),
+  },
+  {
+    id: 'sum2',
+    patientId: 'p1',
+    patientName: 'Sarah Johnson',
+    type: 'progress',
+    title: 'Progress Note - Neuropathy Assessment',
+    content: `Patient continues to experience bilateral foot tingling. Started on Gabapentin 100mg TID for symptom management. HbA1c result: 7.2% - fair control. Will continue current diabetes regimen and reassess in 6 weeks.`,
+    createdAt: new Date('2023-10-20'),
+  },
+  {
+    id: 'sum3',
+    patientId: 'p2',
+    patientName: 'Michael Chen',
+    type: 'soap',
+    title: 'SOAP Note - Cardiology Follow-up',
+    content: `SUBJECTIVE:
+Mr. Chen reports stable angina with occasional chest tightness during exertion. Denies rest pain.
+
+OBJECTIVE:
+BP 138/86, HR 68, regular rhythm. Heart sounds normal, no murmurs.
+
+ASSESSMENT:
+Stable CAD with well-controlled hypertension
+
+PLAN:
+Continue current medications. Stress test in 3 months.`,
+    createdAt: new Date('2024-01-10'),
+  },
+  {
+    id: 'sum4',
+    patientId: 'p3',
+    patientName: 'Emily Rodriguez',
+    type: 'progress',
+    title: 'Progress Note - Anxiety Management',
+    content: `Patient reports improved anxiety symptoms with current SSRI regimen. Sleep quality has improved. Continue Sertraline 50mg daily. Next follow-up in 8 weeks.`,
+    createdAt: new Date('2024-01-18'),
+  },
+  {
+    id: 'sum5',
+    patientId: 'p4',
+    patientName: 'James Thompson',
+    type: 'discharge',
+    title: 'Discharge Summary - COPD Exacerbation',
+    content: `Patient admitted for COPD exacerbation. Treated with IV steroids and nebulizers. Symptoms improved. Discharged on oral prednisone taper and increased inhaler frequency. Follow-up with pulmonology in 1 week.`,
+    createdAt: new Date('2024-01-12'),
+  },
+];
+
 // Mock Summary
 export const mockSOAPNote = `SUBJECTIVE:
 Mrs. Sarah Johnson, a 45-year-old female with a history of Type 2 Diabetes Mellitus, presents for follow-up. She reports new-onset tingling sensation in bilateral feet for approximately 2 weeks, described as "pins and needles" primarily affecting the toes with occasional extension to the ankles. Symptoms are worse at night. She also notes intermittent numbness and a subjective cold sensation in the feet. The patient confirms good medication compliance with Metformin 1000mg twice daily with meals.
