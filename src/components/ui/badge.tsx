@@ -12,6 +12,24 @@ const badgeVariants = cva(
         secondary: "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
         destructive: "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
         outline: "text-foreground",
+        // Clinical status badges
+        draft: "border-warning/30 bg-warning/10 text-warning",
+        reviewed: "border-primary/30 bg-primary/10 text-primary",
+        final: "border-success/30 bg-success/10 text-success",
+        // AI confidence badges
+        "confidence-high": "border-success/30 bg-success/10 text-success",
+        "confidence-medium": "border-warning/30 bg-warning/10 text-warning",
+        "confidence-low": "border-destructive/30 bg-destructive/10 text-destructive",
+        // Severity badges
+        "severity-high": "border-destructive/30 bg-destructive/10 text-destructive",
+        "severity-medium": "border-warning/30 bg-warning/10 text-warning",
+        "severity-low": "border-success/30 bg-success/10 text-success",
+        // AI indicator
+        ai: "border-accent/30 bg-accent/10 text-accent",
+        // Step badges
+        active: "border-primary/30 bg-primary/10 text-primary",
+        complete: "border-success/30 bg-success/10 text-success",
+        pending: "border-muted-foreground/30 bg-muted text-muted-foreground",
       },
     },
     defaultVariants: {
