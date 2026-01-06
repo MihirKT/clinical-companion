@@ -1,10 +1,15 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { Upload, FileAudio, Play, Pause, X } from 'lucide-react';
+import { Upload, FileAudio, Play, Pause, X, CheckCircle, Info } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useWorkflow } from '@/context/WorkflowContext';
 import { mockTranscript } from '@/data/mockData';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 export function UploadCard() {
   const { setCurrentStep, setCurrentTranscript, markStepComplete, setAudioFile } = useWorkflow();
@@ -82,14 +87,24 @@ export function UploadCard() {
   };
 
   return (
-    <Card className="clinical-card h-full">
+    <Card className="clinical-card h-full group hover:shadow-lg transition-all duration-300">
       <CardHeader>
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Upload className="w-5 h-5 text-primary" />
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center group-hover:scale-105 transition-transform">
+            <Upload className="w-6 h-6 text-primary" />
           </div>
-          <div>
-            <CardTitle className="text-lg">Upload Audio</CardTitle>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-lg">Upload Audio</CardTitle>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Info className="w-4 h-4 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="max-w-xs">Upload pre-recorded consultations for transcription. AI will process and extract clinical insights.</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
             <CardDescription>Upload a recorded consultation</CardDescription>
           </div>
         </div>
@@ -98,7 +113,10 @@ export function UploadCard() {
         {!file ? (
           <>
             <div
-              className={cn('upload-zone text-center', isDragging && 'drag-active')}
+              className={cn(
+                'upload-zone text-center relative overflow-hidden',
+                isDragging && 'drag-active'
+              )}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
@@ -111,8 +129,8 @@ export function UploadCard() {
                 onChange={handleFileSelect}
                 className="hidden"
               />
-              <div className="flex flex-col items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+              <div className="flex flex-col items-center gap-4 relative z-10">
+                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                   <Upload className="w-8 h-8 text-primary" />
                 </div>
                 <div>
@@ -120,22 +138,27 @@ export function UploadCard() {
                   <p className="text-sm text-muted-foreground mt-1">or click to browse</p>
                 </div>
               </div>
+              {isDragging && (
+                <div className="absolute inset-0 bg-primary/5 flex items-center justify-center">
+                  <p className="text-primary font-medium">Drop file here</p>
+                </div>
+              )}
             </div>
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
               <FileAudio className="w-4 h-4" />
-              <span>Supported formats: mp3, wav, m4a, ogg</span>
+              <span>Supported: MP3, WAV, M4A, OGG • Max 100MB</span>
             </div>
           </>
         ) : (
-          <div className="space-y-4">
-            <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
-              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                <FileAudio className="w-6 h-6 text-primary" />
+          <div className="space-y-4 animate-fade-in">
+            <div className="flex items-center gap-4 p-4 bg-success/5 border border-success/20 rounded-xl">
+              <div className="w-12 h-12 rounded-lg bg-success/10 flex items-center justify-center">
+                <CheckCircle className="w-6 h-6 text-success" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-foreground truncate">{file.name}</p>
                 <p className="text-sm text-muted-foreground">
-                  {(file.size / (1024 * 1024)).toFixed(2)} MB
+                  {(file.size / (1024 * 1024)).toFixed(2)} MB • Ready to transcribe
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -159,9 +182,11 @@ export function UploadCard() {
             </div>
 
             {isProcessing && (
-              <div className="space-y-2">
+              <div className="space-y-2 animate-fade-in">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Processing...</span>
+                  <span className="text-muted-foreground">
+                    {progress < 30 ? 'Uploading...' : progress < 70 ? 'Transcribing...' : 'Analyzing...'}
+                  </span>
                   <span className="text-primary font-medium">{progress}%</span>
                 </div>
                 <div className="progress-clinical">
@@ -180,7 +205,7 @@ export function UploadCard() {
               variant="clinical"
               size="lg"
             >
-              {isProcessing ? 'Processing...' : 'Upload & Transcribe'}
+              {isProcessing ? 'Processing...' : 'Start Transcription →'}
             </Button>
           </div>
         )}

@@ -1,18 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, MicOff, Pause, Square } from 'lucide-react';
+import { Mic, MicOff, Pause, Square, Info } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useWorkflow } from '@/context/WorkflowContext';
 import { mockTranscript } from '@/data/mockData';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 const mockLiveSegments = [
-  { time: '0:00', text: 'Good morning Mrs Johnson. How are you feeling today?' },
-  { time: '0:05', text: "Morning doctor. I've been doing okay mostly..." },
-  { time: '0:12', text: "...but I've noticed some tingling in my feet lately, especially at night." },
-  { time: '0:20', text: 'I see. Tell me more about this tingling sensation. When did it start?' },
-  { time: '0:28', text: "Maybe about two weeks ago. It's like pins and needles..." },
+  { time: '0:00', text: 'Good morning Mrs Johnson. How are you feeling today?', speaker: 'Doctor' },
+  { time: '0:05', text: "Morning doctor. I've been doing okay mostly...", speaker: 'Patient' },
+  { time: '0:12', text: "...but I've noticed some tingling in my feet lately, especially at night.", speaker: 'Patient' },
+  { time: '0:20', text: 'I see. Tell me more about this tingling sensation. When did it start?', speaker: 'Doctor' },
+  { time: '0:28', text: "Maybe about two weeks ago. It's like pins and needles...", speaker: 'Patient' },
 ];
 
 export function LiveTranscriptionCard() {
@@ -71,85 +76,108 @@ export function LiveTranscriptionCard() {
   };
 
   return (
-    <Card className="clinical-card h-full">
+    <Card className={cn(
+      "clinical-card h-full group transition-all duration-300",
+      isRecording ? "ring-2 ring-primary/30 shadow-lg" : "hover:shadow-lg"
+    )}>
       <CardHeader>
         <div className="flex items-center gap-3">
           <div className={cn(
-            'w-10 h-10 rounded-lg flex items-center justify-center transition-all',
-            isRecording ? 'bg-destructive/10 listening-pulse' : 'bg-primary/10'
+            'w-12 h-12 rounded-xl flex items-center justify-center transition-all',
+            isRecording 
+              ? 'bg-destructive/10 listening-pulse' 
+              : 'bg-gradient-to-br from-accent/20 to-accent/10 group-hover:scale-105'
           )}>
             {isRecording ? (
-              <Mic className="w-5 h-5 text-destructive" />
+              <Mic className="w-6 h-6 text-destructive" />
             ) : (
-              <Mic className="w-5 h-5 text-primary" />
+              <Mic className="w-6 h-6 text-accent" />
             )}
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <CardTitle className="text-lg">Live Transcription</CardTitle>
               {isRecording && (
-                <Badge variant="ai" className="text-xs animate-pulse-gentle">
-                  {isPaused ? 'Paused' : 'Listening...'}
+                <Badge variant="ai" className="text-xs animate-pulse-gentle gap-1">
+                  <span className="w-1.5 h-1.5 bg-current rounded-full animate-pulse" />
+                  {isPaused ? 'Paused' : 'Recording'}
                 </Badge>
               )}
+              <Tooltip>
+                <TooltipTrigger>
+                  <Info className="w-4 h-4 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="max-w-xs">Record consultations in real-time. AI transcribes as you speak and extracts insights.</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
-            <CardDescription>Record and transcribe in real-time</CardDescription>
+            <CardDescription>
+              {isRecording 
+                ? `Recording: ${formatTime(elapsedTime)}` 
+                : 'Record and transcribe in real-time'
+              }
+            </CardDescription>
           </div>
-          {isRecording && (
-            <div className="text-lg font-mono text-foreground">
-              {formatTime(elapsedTime)}
-            </div>
-          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
         {!isRecording ? (
-          <div className="flex flex-col items-center py-8">
+          <div className="flex flex-col items-center py-6">
             <button
               onClick={handleStartRecording}
-              className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-primary-foreground shadow-lg hover:shadow-xl transition-all hover:scale-105 focus:outline-none focus:ring-4 focus:ring-primary/30"
+              className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-primary-foreground shadow-lg hover:shadow-xl transition-all hover:scale-105 focus:outline-none focus:ring-4 focus:ring-primary/30 group"
             >
-              <Mic className="w-10 h-10" />
+              <Mic className="w-10 h-10 group-hover:scale-110 transition-transform" />
             </button>
             <p className="mt-4 text-muted-foreground text-sm">Click to start recording</p>
+            <p className="text-xs text-muted-foreground mt-1">Hands-free • Auto-saves</p>
           </div>
         ) : (
           <>
             {/* Live transcript preview */}
             <div
               ref={scrollRef}
-              className="h-48 overflow-y-auto transcript-scroll bg-muted/30 rounded-lg p-4 space-y-3"
+              className="h-48 overflow-y-auto transcript-scroll bg-muted/30 rounded-xl p-4 space-y-3"
             >
               {currentSegments.map((segment, index) => (
                 <div
                   key={index}
                   className="animate-fade-in flex gap-3 text-sm"
                 >
-                  <span className="text-muted-foreground font-mono text-xs w-10 flex-shrink-0">
+                  <span className="text-muted-foreground font-mono text-xs w-10 flex-shrink-0 pt-0.5">
                     {segment.time}
                   </span>
-                  <p className="text-foreground">{segment.text}</p>
+                  <div className="flex-1">
+                    <span className={cn(
+                      "text-xs font-medium block mb-0.5",
+                      segment.speaker === 'Doctor' ? 'text-primary' : 'text-accent'
+                    )}>
+                      {segment.speaker}
+                    </span>
+                    <p className="text-foreground">{segment.text}</p>
+                  </div>
                 </div>
               ))}
               {currentSegments.length === 0 && (
-                <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                <div className="flex items-center gap-3 text-muted-foreground text-sm py-8 justify-center">
                   <div className="flex gap-1">
                     <span className="w-1 h-4 bg-primary/50 rounded-full animate-wave" style={{ animationDelay: '0ms' }} />
                     <span className="w-1 h-4 bg-primary/50 rounded-full animate-wave" style={{ animationDelay: '150ms' }} />
                     <span className="w-1 h-4 bg-primary/50 rounded-full animate-wave" style={{ animationDelay: '300ms' }} />
                   </div>
-                  <span>Waiting for speech...</span>
+                  <span>Listening for speech...</span>
                 </div>
               )}
             </div>
 
             {/* Recording controls */}
-            <div className="flex items-center justify-center gap-4">
+            <div className="flex items-center justify-center gap-3">
               <Button
                 variant="outline"
                 size="lg"
                 onClick={handlePauseResume}
-                className="gap-2"
+                className="gap-2 min-w-[120px]"
               >
                 {isPaused ? <Mic className="w-5 h-5" /> : <Pause className="w-5 h-5" />}
                 {isPaused ? 'Resume' : 'Pause'}
@@ -158,12 +186,16 @@ export function LiveTranscriptionCard() {
                 variant="recording"
                 size="lg"
                 onClick={handleStopRecording}
-                className="gap-2"
+                className="gap-2 min-w-[160px]"
               >
                 <Square className="w-5 h-5" />
-                Stop Recording
+                Stop & Review →
               </Button>
             </div>
+
+            <p className="text-xs text-center text-muted-foreground">
+              Tip: You can pause anytime without losing progress
+            </p>
           </>
         )}
       </CardContent>
