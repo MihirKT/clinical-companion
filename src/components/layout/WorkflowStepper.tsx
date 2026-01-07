@@ -11,9 +11,9 @@ import {
 } from '@/components/ui/tooltip';
 
 const steps: { id: WorkflowStep; label: string; icon: React.ElementType; description: string; alwaysAccessible?: boolean }[] = [
-  { id: 'capture', label: 'Capture', icon: Upload, description: 'Record or upload audio' },
-  { id: 'review', label: 'Review', icon: FileText, description: 'Review transcript & insights' },
-  { id: 'summarize', label: 'Summarize', icon: FileEdit, description: 'Generate clinical notes' },
+  { id: 'capture', label: 'Capture', icon: Upload, description: 'Record or upload audio', alwaysAccessible: true },
+  { id: 'review', label: 'Review', icon: FileText, description: 'Review transcript & insights', alwaysAccessible: true },
+  { id: 'summarize', label: 'Summarize', icon: FileEdit, description: 'Generate clinical notes', alwaysAccessible: true },
   { id: 'patient-hub', label: 'Patient Hub', icon: Users, description: 'Manage patient records', alwaysAccessible: true },
   { id: 'corrections', label: 'Corrections', icon: PenTool, description: 'Edit terminology dictionary', alwaysAccessible: true },
 ];
