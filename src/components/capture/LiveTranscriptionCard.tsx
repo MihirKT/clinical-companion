@@ -1,13 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
+<<<<<<< HEAD
 import { Mic, MicOff, Pause, Square, Info, Waves, Sparkles } from 'lucide-react';
+=======
+import { Mic, MicOff, Pause, Square, Info, AlertCircle } from 'lucide-react';
+>>>>>>> 0aeffe3 (Add patient link, update patient hub/review UI, and expand mock data)
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useWorkflow } from '@/context/WorkflowContext';
+<<<<<<< HEAD
 import { mockTranscript, mockClinicalMoments, mockAmbientSegments } from '@/data/mockData';
 import { ClinicalMomentsPanel } from './ClinicalMomentsPanel';
 import { ClinicalMoment } from '@/types/clinical';
+=======
+import { useToast } from '@/hooks/use-toast';
+import { mockTranscript } from '@/data/mockData';
+>>>>>>> 0aeffe3 (Add patient link, update patient hub/review UI, and expand mock data)
 import {
   Tooltip,
   TooltipContent,
@@ -23,7 +32,12 @@ const mockLiveSegments = [
 ];
 
 export function LiveTranscriptionCard() {
+<<<<<<< HEAD
   const { setCurrentStep, setCurrentTranscript, markStepComplete, isRecording, setIsRecording, isAmbientMode, isMinimalMode, linkedPatientId } = useWorkflow();
+=======
+  const { setCurrentStep, setCurrentTranscript, markStepComplete, isRecording, setIsRecording, selectedPatient } = useWorkflow();
+  const { toast } = useToast();
+>>>>>>> 0aeffe3 (Add patient link, update patient hub/review UI, and expand mock data)
   const [isPaused, setIsPaused] = useState(false);
   const [currentSegments, setCurrentSegments] = useState<typeof mockLiveSegments>([]);
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -68,6 +82,14 @@ export function LiveTranscriptionCard() {
   };
 
   const handleStartRecording = () => {
+    if (!selectedPatient) {
+      toast({
+        title: 'Patient Selection Required',
+        description: 'Please select a patient before starting live transcription.',
+        variant: 'destructive',
+      });
+      return;
+    }
     setIsRecording(true);
     setIsPaused(false);
     setElapsedTime(0);
@@ -137,15 +159,36 @@ export function LiveTranscriptionCard() {
       </CardHeader>
       <CardContent className="space-y-4">
         {!isRecording ? (
-          <div className="flex flex-col items-center py-6">
+          <div className="flex flex-col items-center py-6 space-y-4">
+            {!selectedPatient && (
+              <div className="w-full flex items-start gap-3 p-3 bg-destructive/5 border border-destructive/20 rounded-lg">
+                <AlertCircle className="w-5 h-5 text-destructive mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-destructive">Patient Selection Required</p>
+                  <p className="text-xs text-destructive/80 mt-1">
+                    Please link a patient using the button in the header before starting transcription.
+                  </p>
+                </div>
+              </div>
+            )}
             <button
               onClick={handleStartRecording}
-              className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-primary-foreground shadow-lg hover:shadow-xl transition-all hover:scale-105 focus:outline-none focus:ring-4 focus:ring-primary/30 group"
+              disabled={!selectedPatient}
+              className={cn(
+                "w-24 h-24 rounded-full flex items-center justify-center text-primary-foreground shadow-lg hover:shadow-xl transition-all hover:scale-105 focus:outline-none focus:ring-4 focus:ring-primary/30 group",
+                selectedPatient 
+                  ? "bg-gradient-to-br from-primary to-accent cursor-pointer" 
+                  : "bg-muted text-muted-foreground cursor-not-allowed opacity-50"
+              )}
             >
               <Mic className="w-10 h-10 group-hover:scale-110 transition-transform" />
             </button>
-            <p className="mt-4 text-muted-foreground text-sm">Click to start recording</p>
-            <p className="text-xs text-muted-foreground mt-1">Hands-free • Auto-saves</p>
+            <div>
+              <p className="text-muted-foreground text-sm">
+                {selectedPatient ? 'Click to start recording' : 'Select patient to start'}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">Hands-free • Auto-saves</p>
+            </div>
           </div>
         ) : (
           <>

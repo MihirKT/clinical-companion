@@ -25,6 +25,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { PatientCreationModal } from '@/components/modals/PatientCreationModal';
 
 const typeLabels: Record<string, string> = {
   soap: 'SOAP Note',
@@ -41,6 +42,7 @@ export function PatientHubPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filterCondition, setFilterCondition] = useState<string>('all');
   const [selectedSummaryId, setSelectedSummaryId] = useState<string | null>(null);
+  const [patientCreationOpen, setPatientCreationOpen] = useState(false);
 
   const conditions = ['all', ...new Set(mockPatients.map(p => p.primaryCondition).filter(Boolean))];
 
@@ -61,6 +63,19 @@ export function PatientHubPage() {
     setSelectedPatient(patient);
     markStepComplete('patient-hub');
     setCurrentStep('demographics');
+  };
+
+  const handlePatientCreated = (newPatient: Patient) => {
+    // In a real application, this would save to a backend
+    // For now, we'll just select the patient and navigate to demographics
+    setSelectedPatient(newPatient);
+    markStepComplete('patient-hub');
+    setCurrentStep('demographics');
+    
+    toast({
+      title: 'Patient Created',
+      description: `${newPatient.name} has been added to the system.`,
+    });
   };
 
   const handleCopySummary = () => {
@@ -91,7 +106,11 @@ export function PatientHubPage() {
             {filteredPatients.length} patient{filteredPatients.length !== 1 ? 's' : ''} found
           </p>
         </div>
-        <Button variant="clinical" className="gap-2 self-start sm:self-auto">
+        <Button 
+          variant="clinical" 
+          className="gap-2 self-start sm:self-auto" 
+          onClick={() => setPatientCreationOpen(true)}
+        >
           <Plus className="w-4 h-4" />
           Add Patient
         </Button>
@@ -310,6 +329,12 @@ export function PatientHubPage() {
           </ScrollArea>
         </DialogContent>
       </Dialog>
+
+      <PatientCreationModal
+        open={patientCreationOpen}
+        onOpenChange={setPatientCreationOpen}
+        onPatientCreated={handlePatientCreated}
+      />
     </div>
   );
 }

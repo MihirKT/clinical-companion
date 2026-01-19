@@ -31,7 +31,7 @@ export function TranscriptPanel() {
 
   return (
     <Card className="clinical-card h-full">
-      <CardHeader className="pb-4">
+      <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">Transcript</CardTitle>
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'raw' | 'improved')}>
@@ -95,35 +95,25 @@ export function TranscriptPanel() {
       </CardHeader>
 
       <CardContent>
-        <div className="h-[400px] overflow-y-auto transcript-scroll pr-2 space-y-1">
+        <div className="max-h-[550px] overflow-y-auto transcript-scroll pr-2 space-y-1.5">
           {transcript.segments.map((segment, index) => (
             <div
               key={segment.id}
               onClick={() => handleSegmentClick(segment.startTime)}
               className={cn(
-                'group flex gap-3 p-3 rounded-lg cursor-pointer transition-all hover:bg-muted/50',
+                'group flex gap-2 p-2 rounded-lg cursor-pointer transition-all hover:bg-muted/50',
                 currentTime >= segment.startTime && currentTime < segment.endTime && 'bg-primary/5 border-l-2 border-primary'
               )}
             >
-              <span className="text-xs text-muted-foreground font-mono w-10 flex-shrink-0 pt-0.5 group-hover:text-primary">
-                {formatTime(segment.startTime)}
+              <span className="text-xs text-muted-foreground font-mono w-12 flex-shrink-0 pt-0.5 group-hover:text-primary">
+                [{formatTime(segment.startTime)}]
               </span>
-              <div className="flex-1">
-                {segment.speaker && (
-                  <span className={cn(
-                    'text-xs font-medium mb-1 block',
-                    segment.speaker === 'Doctor' ? 'text-primary' : 'text-accent'
-                  )}>
-                    {segment.speaker}
-                  </span>
-                )}
-                <p className={cn(
-                  'text-sm text-foreground leading-relaxed',
-                  activeTab === 'improved' && segment.isAiImproved && showAiChanges && 'ai-correction'
-                )}>
-                  {activeTab === 'raw' ? (segment.originalText || segment.text) : segment.text}
-                </p>
-              </div>
+              <p className={cn(
+                'text-sm text-foreground leading-relaxed flex-1',
+                activeTab === 'improved' && segment.isAiImproved && showAiChanges && 'ai-correction'
+              )}>
+                {activeTab === 'raw' ? (segment.originalText || segment.text) : segment.text}
+              </p>
             </div>
           ))}
         </div>

@@ -66,53 +66,50 @@ export function ReviewPage() {
   }
 
   return (
-    <div className="animate-fade-in space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="animate-fade-in space-y-3">
+      <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="text-2xl font-semibold text-foreground">Review Transcript</h2>
-          <p className="text-muted-foreground mt-1">Review the transcript and AI-generated clinical insights</p>
+          <p className="text-muted-foreground text-sm">Review and approve the transcript and clinical insights</p>
         </div>
+        <Button
+          onClick={handleNext}
+          variant="clinical"
+          size="lg"
+          className="gap-2 h-10 flex-shrink-0"
+        >
+          Next: Summarize
+          <ArrowRight className="w-4 h-4" />
+        </Button>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid lg:grid-cols-2 gap-3">
         <TranscriptPanel />
         <ClinicalInsightsPanel />
       </div>
 
       {/* Review Footer */}
-      <div className="flex items-center justify-between p-4 bg-card rounded-xl border border-border">
-        <div className="flex items-center gap-6">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <Checkbox
-              checked={transcriptReviewed}
-              onCheckedChange={(checked) => setTranscriptReviewed(checked as boolean)}
-            />
-            <Label className="cursor-pointer text-sm text-muted-foreground">
-              Transcript reviewed
-            </Label>
-            {transcriptReviewed && <CheckCircle className="w-4 h-4 text-success" />}
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <Checkbox
-              checked={insightsReviewed}
-              onCheckedChange={(checked) => setInsightsReviewed(checked as boolean)}
-            />
-            <Label className="cursor-pointer text-sm text-muted-foreground">
-              Insights reviewed
-            </Label>
-            {insightsReviewed && <CheckCircle className="w-4 h-4 text-success" />}
-          </label>
-        </div>
-
-        <Button
-          onClick={handleNext}
-          variant="clinical"
-          size="lg"
-          className="gap-2"
-        >
-          Next: Summarize
-          <ArrowRight className="w-4 h-4" />
-        </Button>
+      <div className="flex items-center gap-3 p-3 bg-card rounded-lg border border-border">
+        <label className="flex items-center gap-2 cursor-pointer flex-1">
+          <Checkbox
+            checked={transcriptReviewed}
+            onCheckedChange={(checked) => setTranscriptReviewed(checked as boolean)}
+          />
+          <Label className="cursor-pointer text-xs text-muted-foreground whitespace-nowrap">
+            Transcript reviewed
+          </Label>
+          {transcriptReviewed && <CheckCircle className="w-4 h-4 text-success flex-shrink-0" />}
+        </label>
+        <label className="flex items-center gap-2 cursor-pointer flex-1">
+          <Checkbox
+            checked={insightsReviewed}
+            onCheckedChange={(checked) => setInsightsReviewed(checked as boolean)}
+          />
+          <Label className="cursor-pointer text-xs text-muted-foreground whitespace-nowrap">
+            Insights reviewed
+          </Label>
+          {insightsReviewed && <CheckCircle className="w-4 h-4 text-success flex-shrink-0" />}
+        </label>
       </div>
     </div>
   );

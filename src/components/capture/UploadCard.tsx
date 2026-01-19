@@ -1,9 +1,10 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { Upload, FileAudio, Play, Pause, X, CheckCircle, Info } from 'lucide-react';
+import { Upload, FileAudio, Play, Pause, X, CheckCircle, Info, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useWorkflow } from '@/context/WorkflowContext';
+import { useToast } from '@/hooks/use-toast';
 import { mockTranscript } from '@/data/mockData';
 import {
   Tooltip,
@@ -12,7 +13,8 @@ import {
 } from '@/components/ui/tooltip';
 
 export function UploadCard() {
-  const { setCurrentStep, setCurrentTranscript, markStepComplete, setAudioFile } = useWorkflow();
+  const { setCurrentStep, setCurrentTranscript, markStepComplete, setAudioFile, selectedPatient } = useWorkflow();
+  const { toast } = useToast();
   const [isDragging, setIsDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -53,6 +55,16 @@ export function UploadCard() {
 
   const handleUploadAndTranscribe = async () => {
     if (!file) return;
+
+    // Check if patient is selected
+    if (!selectedPatient) {
+      toast({
+        title: 'Patient Selection Required',
+        description: 'Please select a patient before starting transcription.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     setIsProcessing(true);
     setProgress(0);
@@ -151,6 +163,17 @@ export function UploadCard() {
           </>
         ) : (
           <div className="space-y-4 animate-fade-in">
+            {!selectedPatient && (
+              <div className="flex items-start gap-3 p-3 bg-destructive/5 border border-destructive/20 rounded-lg">
+                <AlertCircle className="w-5 h-5 text-destructive mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-destructive">Patient Selection Required</p>
+                  <p className="text-xs text-destructive/80 mt-1">
+                    Please link a patient using the button in the header before starting transcription.
+                  </p>
+                </div>
+              </div>
+            )}
             <div className="flex items-center gap-4 p-4 bg-success/5 border border-success/20 rounded-xl">
               <div className="w-12 h-12 rounded-lg bg-success/10 flex items-center justify-center">
                 <CheckCircle className="w-6 h-6 text-success" />
@@ -200,12 +223,12 @@ export function UploadCard() {
 
             <Button
               onClick={handleUploadAndTranscribe}
-              disabled={isProcessing}
+              disabled={isProcessing || !selectedPatient}
               className="w-full"
               variant="clinical"
               size="lg"
             >
-              {isProcessing ? 'Processing...' : 'Start Transcription →'}
+              {isProcessing ? 'Processing...' : selectedPatient ? 'Start Transcription →' : 'Select Patient First'}
             </Button>
           </div>
         )}

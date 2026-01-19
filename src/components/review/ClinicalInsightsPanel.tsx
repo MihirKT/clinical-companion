@@ -36,31 +36,31 @@ export function ClinicalInsightsPanel() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* AI Badge */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Sparkles className="w-4 h-4 text-accent" />
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <Sparkles className="w-3 h-3 text-accent" />
         <span>AI-Generated Clinical Insights</span>
       </div>
 
       {/* Key Clinical Findings */}
       <Card className="clinical-card">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Brain className="w-4 h-4 text-primary" />
+              <div className="w-7 h-7 rounded bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Brain className="w-3 h-3 text-primary" />
               </div>
-              <CardTitle className="text-base">Key Clinical Findings</CardTitle>
+              <CardTitle className="text-sm">Key Clinical Findings</CardTitle>
             </div>
-            <Badge variant={confidenceVariant['high']}>High Confidence</Badge>
+            <Badge variant={confidenceVariant['high']} className="text-xs">High Confidence</Badge>
           </div>
         </CardHeader>
-        <CardContent>
-          <ul className="space-y-2">
+        <CardContent className="pt-2">
+          <ul className="space-y-1">
             {(mockInsights[0].content as string[]).map((finding, idx) => (
-              <li key={idx} className="flex items-start gap-2 text-sm">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+              <li key={idx} className="flex items-start gap-2 text-xs">
+                <div className="w-1 h-1 rounded-full bg-primary mt-1.5 flex-shrink-0" />
                 <span className="text-foreground">{finding}</span>
               </li>
             ))}

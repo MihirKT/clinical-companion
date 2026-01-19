@@ -9,6 +9,7 @@ import { MinimalCaptureView } from '@/components/capture/MinimalCaptureView';
 import { QuickStats } from '@/components/dashboard/QuickStats';
 import { RecentTranscriptions } from '@/components/dashboard/RecentTranscriptions';
 import { QuickActions } from '@/components/dashboard/QuickActions';
+<<<<<<< HEAD
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Lightbulb, Settings2 } from 'lucide-react';
 import { useWorkflow } from '@/context/WorkflowContext';
@@ -57,6 +58,15 @@ export function CapturePage() {
       </div>
     );
   }
+=======
+import { PatientLinkButton } from '@/components/capture/PatientLinkButton';
+import { PatientInfoBadge } from '@/components/capture/PatientInfoBadge';
+import { Lightbulb } from 'lucide-react';
+import { useWorkflow } from '@/context/WorkflowContext';
+
+export function CapturePage() {
+  const { selectedPatient, setSelectedPatient } = useWorkflow();
+>>>>>>> 0aeffe3 (Add patient link, update patient hub/review UI, and expand mock data)
 
   return (
     <div className="animate-fade-in space-y-8">
@@ -70,8 +80,25 @@ export function CapturePage() {
             Start a new transcription or review recent sessions
           </p>
         </div>
-        <QuickActions />
+        <div className="flex items-center gap-3">
+          <PatientLinkButton
+            onSelectPatient={setSelectedPatient}
+            showLabel
+          />
+          <QuickActions />
+        </div>
       </div>
+
+      {/* Selected Patient Info */}
+      {selectedPatient && (
+        <div>
+          <PatientInfoBadge
+            patient={selectedPatient}
+            onRemove={() => setSelectedPatient(null)}
+            variant="default"
+          />
+        </div>
+      )}
 
       {/* Quick Stats */}
       <QuickStats />

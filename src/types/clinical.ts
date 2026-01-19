@@ -2,7 +2,7 @@
 
 export type DocumentStatus = 'draft' | 'reviewed' | 'final';
 
-export type WorkflowStep = 'capture' | 'review' | 'summarize' | 'patient-hub' | 'demographics' | 'corrections';
+export type WorkflowStep = 'capture' | 'review' | 'summarize' | 'patient-hub' | 'demographics' | 'corrections' | 'transcriptions';
 
 export type SummaryType = 'soap' | 'discharge' | 'referral' | 'progress' | 'custom';
 
@@ -23,10 +23,19 @@ export interface Patient {
   gender: 'male' | 'female' | 'other';
   medicalId: string;
   contact?: string;
+  contactNumber?: string;
   primaryCondition?: string;
   lastVisit?: Date;
   aiSummary?: string;
   alerts?: PatientAlert[];
+  allergies?: string;
+  currentMedications?: string;
+  vitals?: {
+    bloodPressure?: string;
+    heartRate?: number;
+    temperature?: number;
+    respiratoryRate?: number;
+  };
 }
 
 export interface PatientAlert {

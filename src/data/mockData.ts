@@ -384,6 +384,15 @@ Continue current medications. Stress test in 3 months.`,
   },
   {
     id: 'sum4',
+    patientId: 'p2',
+    patientName: 'Michael Chen',
+    type: 'progress',
+    title: 'Progress Note - Medication Adjustment',
+    content: `Patient tolerated medication adjustment well. Chest pain episodes reduced by 50%. Blood pressure readings more stable. Continue new regimen and follow-up in 4 weeks.`,
+    createdAt: new Date('2023-12-28'),
+  },
+  {
+    id: 'sum5',
     patientId: 'p3',
     patientName: 'Emily Rodriguez',
     type: 'progress',
@@ -393,7 +402,26 @@ Continue current medications. Stress test in 3 months.`,
     createdAt: new Date('2024-01-18'),
   },
   {
-    id: 'sum5',
+    id: 'sum6',
+    patientId: 'p3',
+    patientName: 'Emily Rodriguez',
+    type: 'soap',
+    title: 'SOAP Note - Mental Health Assessment',
+    content: `SUBJECTIVE:
+Patient reports feeling much better on current medication. Anxiety level decreased from 8/10 to 4/10. Attending therapy sessions regularly.
+
+OBJECTIVE:
+Patient alert, cooperative, appropriate affect. No signs of acute distress.
+
+ASSESSMENT:
+Generalized Anxiety Disorder - well controlled on current regimen
+
+PLAN:
+Continue Sertraline 50mg daily. Continue weekly therapy. Reassess in 6 weeks.`,
+    createdAt: new Date('2023-12-15'),
+  },
+  {
+    id: 'sum7',
     patientId: 'p4',
     patientName: 'James Thompson',
     type: 'discharge',
@@ -401,6 +429,73 @@ Continue current medications. Stress test in 3 months.`,
     visitType: 'post-op',
     content: `Patient admitted for COPD exacerbation. Treated with IV steroids and nebulizers. Symptoms improved. Discharged on oral prednisone taper and increased inhaler frequency. Follow-up with pulmonology in 1 week.`,
     createdAt: new Date('2024-01-12'),
+  },
+  {
+    id: 'sum8',
+    patientId: 'p4',
+    patientName: 'James Thompson',
+    type: 'progress',
+    title: 'Progress Note - Post-hospitalization Follow-up',
+    content: `Patient recovering well from recent hospitalization. Shortness of breath improved. Using prescribed inhalers as directed. Blood oxygen levels stable at 94%. Continue current regimen and monitor closely.`,
+    createdAt: new Date('2024-01-05'),
+  },
+  {
+    id: 'sum9',
+    patientId: 'p5',
+    patientName: 'Lisa Park',
+    type: 'soap',
+    title: 'SOAP Note - Migraine Management',
+    content: `SUBJECTIVE:
+Patient presents with chronic migraine, occurring 2-3 times per week. Current triptans show limited efficacy.
+
+OBJECTIVE:
+Neurological exam: Normal. No focal deficits. Pupils reactive.
+
+ASSESSMENT:
+Chronic migraine - inadequately controlled
+
+PLAN:
+1. Start preventive therapy with Propranolol 40mg daily
+2. Continue triptans for acute episodes
+3. Discuss trigger identification
+4. Follow-up in 4 weeks`,
+    createdAt: new Date('2024-01-20'),
+  },
+  {
+    id: 'sum10',
+    patientId: 'p6',
+    patientName: 'Robert Williams',
+    type: 'referral',
+    title: 'Referral Letter - Orthopedic Surgery',
+    content: `Dear Dr. [Orthopedic Surgeon],
+
+Re: Robert Williams, 55-year-old male with bilateral knee osteoarthritis
+
+Patient has moderate pain and reduced mobility affecting daily activities. Conservative management with NSAIDs and physical therapy has provided limited relief.
+
+Requesting evaluation for possible knee replacement surgery.
+
+Best regards,
+[Primary Care Physician]`,
+    createdAt: new Date('2024-01-08'),
+  },
+  {
+    id: 'sum11',
+    patientId: 'p6',
+    patientName: 'Robert Williams',
+    type: 'progress',
+    title: 'Progress Note - Physical Therapy Follow-up',
+    content: `Patient completed 6 weeks of physical therapy. Range of motion improved slightly. Pain still significant with prolonged walking. Considering surgical consultation as recommended.`,
+    createdAt: new Date('2023-12-20'),
+  },
+  {
+    id: 'sum12',
+    patientId: 'p5',
+    patientName: 'Lisa Park',
+    type: 'progress',
+    title: 'Progress Note - Preventive Therapy Response',
+    content: `Patient started on Propranolol one week ago. Tolerating well with no side effects. Migraine frequency already showing signs of improvement. Patient optimistic about prognosis.`,
+    createdAt: new Date('2024-01-17'),
   },
 ];
 

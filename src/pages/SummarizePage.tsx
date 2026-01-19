@@ -8,6 +8,9 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useWorkflow } from '@/context/WorkflowContext';
+import { PatientLinkButton } from '@/components/capture/PatientLinkButton';
+import { PatientInfoBadge } from '@/components/capture/PatientInfoBadge';
+import { SummaryPatientLink } from '@/components/summarize/SummaryPatientLink';
 import { mockSOAPNote, mockPreviousSummaries } from '@/data/mockData';
 import { SummaryType } from '@/types/clinical';
 import { useToast } from '@/hooks/use-toast';
@@ -38,7 +41,7 @@ const typeLabels: Record<string, string> = {
 };
 
 export function SummarizePage() {
-  const { setCurrentStep, markStepComplete, setDocumentStatus, currentTranscript, audioFile } = useWorkflow();
+  const { setCurrentStep, markStepComplete, setDocumentStatus, currentTranscript, audioFile, selectedPatient, setSelectedPatient } = useWorkflow();
   const { toast } = useToast();
   const [summaryType, setSummaryType] = useState<SummaryType>('soap');
   const [language, setLanguage] = useState('en');
@@ -46,6 +49,7 @@ export function SummarizePage() {
   const [generatedSummary, setGeneratedSummary] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedPreviousSummary, setSelectedPreviousSummary] = useState<string | null>(null);
+  const [summaryLinkedToPatient, setSummaryLinkedToPatient] = useState(false);
 
   const hasTranscript = currentTranscript !== null || audioFile !== null;
 
@@ -91,10 +95,27 @@ export function SummarizePage() {
   if (!hasTranscript) {
     return (
       <div className="animate-fade-in space-y-6 max-w-5xl mx-auto">
-        <div>
-          <h2 className="text-2xl font-semibold text-foreground">Generate Summary</h2>
-          <p className="text-muted-foreground mt-1">Configure and generate clinical documentation</p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-semibold text-foreground">Generate Summary</h2>
+            <p className="text-muted-foreground mt-1">Configure and generate clinical documentation</p>
+          </div>
+          <PatientLinkButton
+            onSelectPatient={setSelectedPatient}
+            showLabel
+          />
         </div>
+
+        {/* Selected Patient Info */}
+        {selectedPatient && (
+          <div>
+            <PatientInfoBadge
+              patient={selectedPatient}
+              onRemove={() => setSelectedPatient(null)}
+              variant="default"
+            />
+          </div>
+        )}
 
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Empty State Card */}
@@ -227,10 +248,27 @@ export function SummarizePage() {
 
   return (
     <div className="animate-fade-in space-y-6 max-w-5xl mx-auto">
-      <div>
-        <h2 className="text-2xl font-semibold text-foreground">Generate Summary</h2>
-        <p className="text-muted-foreground mt-1">Configure and generate clinical documentation</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-semibold text-foreground">Generate Summary</h2>
+          <p className="text-muted-foreground mt-1">Configure and generate clinical documentation</p>
+        </div>
+        <PatientLinkButton
+          onSelectPatient={setSelectedPatient}
+          showLabel
+        />
       </div>
+
+      {/* Selected Patient Info */}
+      {selectedPatient && (
+        <div>
+          <PatientInfoBadge
+            patient={selectedPatient}
+            onRemove={() => setSelectedPatient(null)}
+            variant="default"
+          />
+        </div>
+      )}
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Configuration Card */}
@@ -364,52 +402,84 @@ export function SummarizePage() {
 
       {/* Generated Summary */}
       {generatedSummary && (
-        <Card className="clinical-card animate-slide-up">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
-                  <FileEdit className="w-5 h-5 text-success" />
+        <div className="space-y-6 animate-slide-up">
+          {/* Summary Patient Link Component */}
+          {!selectedPreviousSummary && (
+            <SummaryPatientLink
+              linkedPatient={summaryLinkedToPatient ? selectedPatient : null}
+              onLink={() => {
+                if (!selectedPatient) {
+                  toast({
+                    title: 'Please Link a Patient',
+                    description: 'Use the "Link Patient" button in the header first.',
+                    variant: 'destructive',
+                  });
+                } else {
+                  setSummaryLinkedToPatient(true);
+                  toast({
+                    title: 'Summary Linked',
+                    description: `Summary linked to ${selectedPatient.name}`,
+                  });
+                }
+              }}
+              onUnlink={() => {
+                setSummaryLinkedToPatient(false);
+                toast({
+                  title: 'Summary Unlinked',
+                  description: 'Summary removed from patient record',
+                });
+              }}
+              isLinked={summaryLinkedToPatient && !!selectedPatient}
+            />
+          )}
+
+          <Card className="clinical-card">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
+                    <FileEdit className="w-5 h-5 text-success" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">
+                      {selectedPreviousSummary 
+                        ? mockPreviousSummaries.find(s => s.id === selectedPreviousSummary)?.title
+                        : 'Generated Summary'
+                      }
+                    </CardTitle>
+                    <CardDescription>
+                      {selectedPreviousSummary
+                        ? `${mockPreviousSummaries.find(s => s.id === selectedPreviousSummary)?.patientName} • ${format(mockPreviousSummaries.find(s => s.id === selectedPreviousSummary)?.createdAt || new Date(), 'MMM d, yyyy')}`
+                        : summaryTypes.find(t => t.value === summaryType)?.label
+                      }
+                    </CardDescription>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle className="text-lg">
-                    {selectedPreviousSummary 
-                      ? mockPreviousSummaries.find(s => s.id === selectedPreviousSummary)?.title
-                      : 'Generated Summary'
-                    }
-                  </CardTitle>
-                  <CardDescription>
-                    {selectedPreviousSummary
-                      ? `${mockPreviousSummaries.find(s => s.id === selectedPreviousSummary)?.patientName} • ${format(mockPreviousSummaries.find(s => s.id === selectedPreviousSummary)?.createdAt || new Date(), 'MMM d, yyyy')}`
-                      : summaryTypes.find(t => t.value === summaryType)?.label
-                    }
-                  </CardDescription>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {!selectedPreviousSummary && (
-                  <Button variant="outline" size="sm" onClick={handleGenerate} disabled={isGenerating}>
-                    <RefreshCw className="w-4 h-4 mr-1" />
-                    Regenerate
+                <div className="flex items-center gap-2">
+                  {!selectedPreviousSummary && (
+                    <Button variant="outline" size="sm" onClick={handleGenerate} disabled={isGenerating}>
+                      <RefreshCw className="w-4 h-4 mr-1" />
+                      Regenerate
+                    </Button>
+                  )}
+                  <Button variant="outline" size="sm" onClick={handleCopy}>
+                    <Copy className="w-4 h-4 mr-1" />
+                    Copy
                   </Button>
-                )}
-                <Button variant="outline" size="sm" onClick={handleCopy}>
-                  <Copy className="w-4 h-4 mr-1" />
-                  Copy
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Download className="w-4 h-4 mr-1" />
-                  Export
-                </Button>
+                  <Button variant="outline" size="sm">
+                    <Download className="w-4 h-4 mr-1" />
+                    Export
+                  </Button>
+                </div>
               </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="bg-muted/30 rounded-lg p-6 font-mono text-sm whitespace-pre-wrap leading-relaxed text-foreground max-h-[500px] overflow-y-auto transcript-scroll">
-              {generatedSummary}
-            </div>
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-muted/30 rounded-lg p-6 font-mono text-sm whitespace-pre-wrap leading-relaxed text-foreground max-h-[500px] overflow-y-auto transcript-scroll">
+                {generatedSummary}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* Footer */}

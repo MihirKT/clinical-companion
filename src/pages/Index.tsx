@@ -7,6 +7,7 @@ import { SummarizePage } from './SummarizePage';
 import { PatientHubPage } from './PatientHubPage';
 import { PatientDemographicsPage } from './PatientDemographicsPage';
 import { CorrectionsPage } from './CorrectionsPage';
+import { TranscriptionsPage } from './TranscriptionsPage';
 
 const Index = () => {
   const { currentStep } = useWorkflow();
@@ -25,6 +26,8 @@ const Index = () => {
         return <PatientDemographicsPage />;
       case 'corrections':
         return <CorrectionsPage />;
+      case 'transcriptions':
+        return <TranscriptionsPage />;
       default:
         return <CapturePage />;
     }
