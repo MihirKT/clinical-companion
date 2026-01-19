@@ -9,6 +9,14 @@ import {
   CorrectionEntry,
   VitalSign,
   Medication,
+  AmbientSession,
+  ClinicalMoment,
+  ClinicianStyleProfile,
+  RefinementVersion,
+  QualityWarning,
+  RecentTranscription,
+  VisitType,
+  TranscriptSegment,
 } from '@/types/clinical';
 
 // Mock Patients
@@ -122,10 +130,15 @@ export const mockVisits: Visit[] = [
   },
 ];
 
-// Mock Transcript
+// Enhanced Mock Transcript with speaker roles and clinical classification
 export const mockTranscript: Transcript = {
   id: 't1',
   visitId: 'v1',
+  patientId: 'p1',
+  patientName: 'Sarah Johnson',
+  visitType: 'follow-up',
+  title: 'Diabetic Follow-up - Neuropathy Symptoms',
+  audioQuality: 'good',
   rawText: `Doctor: Good morning Mrs Johnson. How are you feeling today?
 
 Patient: Morning doctor. I've been doing okay mostly, but I've noticed some tingling in my feet lately, especially at night.
@@ -157,20 +170,21 @@ Doctor: Let's review your latest blood glucose readings and examine your feet. H
 
 Patient: Yes, twice daily with meals, exactly as prescribed.`,
   segments: [
-    { id: 's1', startTime: 0, endTime: 5, text: 'Good morning Mrs Johnson. How are you feeling today?', speaker: 'Doctor' },
-    { id: 's2', startTime: 5, endTime: 15, text: "Morning doctor. I've been doing okay mostly, but I've noticed some tingling in my feet lately, especially at night.", speaker: 'Patient' },
-    { id: 's3', startTime: 15, endTime: 22, text: 'I see. Tell me more about this tingling sensation. When did it start?', speaker: 'Doctor' },
-    { id: 's4', startTime: 22, endTime: 35, text: "Maybe about two weeks ago. It's like pins and needles, mostly in my toes but sometimes up to my ankles.", speaker: 'Patient', isAiImproved: true, originalText: "Maybe about two weeks ago. It's like pins and needles, mostly in my toes but sometimes up to my ankles." },
-    { id: 's5', startTime: 35, endTime: 42, text: "That's helpful to know. Are you experiencing any numbness along with the tingling?", speaker: 'Doctor' },
-    { id: 's6', startTime: 42, endTime: 50, text: "Yes, sometimes. And my feet feel cold even when they're not.", speaker: 'Patient', isAiImproved: true, originalText: "Yes, sometimes. And my feet feel cold even when they're not." },
-    { id: 's7', startTime: 50, endTime: 62, text: "Let's check your latest blood sugar readings and examine your feet. Have you been taking your Metformin regularly?", speaker: 'Doctor' },
-    { id: 's8', startTime: 62, endTime: 70, text: 'Yes, twice a day with meals, just like you prescribed.', speaker: 'Patient' },
+    { id: 's1', startTime: 0, endTime: 5, text: 'Good morning Mrs Johnson. How are you feeling today?', speaker: 'Doctor', speakerRole: 'clinician', isClinical: true, confidenceScore: 0.95 },
+    { id: 's2', startTime: 5, endTime: 15, text: "Morning doctor. I've been doing okay mostly, but I've noticed some tingling in my feet lately, especially at night.", speaker: 'Patient', speakerRole: 'patient', isClinical: true, confidenceScore: 0.92 },
+    { id: 's3', startTime: 15, endTime: 22, text: 'I see. Tell me more about this tingling sensation. When did it start?', speaker: 'Doctor', speakerRole: 'clinician', isClinical: true, confidenceScore: 0.97 },
+    { id: 's4', startTime: 22, endTime: 35, text: "Maybe about two weeks ago. It's like pins and needles, mostly in my toes but sometimes up to my ankles.", speaker: 'Patient', speakerRole: 'patient', isAiImproved: true, originalText: "Maybe about two weeks ago. It's like pins and needles, mostly in my toes but sometimes up to my ankles.", isClinical: true, confidenceScore: 0.89 },
+    { id: 's5', startTime: 35, endTime: 42, text: "That's helpful to know. Are you experiencing any numbness along with the tingling?", speaker: 'Doctor', speakerRole: 'clinician', isClinical: true, confidenceScore: 0.96 },
+    { id: 's6', startTime: 42, endTime: 50, text: "Yes, sometimes. And my feet feel cold even when they're not.", speaker: 'Patient', speakerRole: 'patient', isAiImproved: true, originalText: "Yes, sometimes. And my feet feel cold even when they're not.", isClinical: true, confidenceScore: 0.88 },
+    { id: 's7', startTime: 50, endTime: 62, text: "Let's check your latest blood sugar readings and examine your feet. Have you been taking your Metformin regularly?", speaker: 'Doctor', speakerRole: 'clinician', isClinical: true, confidenceScore: 0.94 },
+    { id: 's8', startTime: 62, endTime: 70, text: 'Yes, twice a day with meals, just like you prescribed.', speaker: 'Patient', speakerRole: 'patient', isClinical: true, confidenceScore: 0.91 },
   ],
   duration: 70,
   createdAt: new Date('2024-01-15'),
+  qualityWarnings: [],
 };
 
-// Mock Clinical Insights
+// Enhanced Mock Clinical Insights with explainability
 export const mockInsights: ClinicalInsight[] = [
   {
     id: 'i1',
@@ -184,6 +198,9 @@ export const mockInsights: ClinicalInsight[] = [
       'Medication compliance confirmed (Metformin BID)',
     ],
     confidence: 'high',
+    linkedSegmentIds: ['s2', 's4', 's6', 's8'],
+    linkedTimestamps: [5, 22, 42, 62],
+    explanation: 'These findings were extracted from direct patient statements describing symptom onset, location, character, and timing. Medication compliance was confirmed through explicit patient acknowledgment.',
   },
   {
     id: 'i2',
@@ -191,6 +208,8 @@ export const mockInsights: ClinicalInsight[] = [
     title: 'Differential Diagnosis',
     content: 'Based on patient presentation and history',
     confidence: 'medium',
+    linkedSegmentIds: ['s2', 's4', 's6'],
+    explanation: 'Diagnosis considerations are based on the combination of sensory symptoms (tingling, numbness, cold sensation) in a patient with known Type 2 Diabetes on Metformin therapy.',
   },
   {
     id: 'i3',
@@ -199,6 +218,8 @@ export const mockInsights: ClinicalInsight[] = [
     content: 'Potential complications requiring attention',
     confidence: 'high',
     severity: 'medium',
+    linkedSegmentIds: ['s7', 's8'],
+    explanation: 'Safety considerations arise from the known association between long-term Metformin use and B12 deficiency, combined with the development of neuropathic symptoms.',
   },
   {
     id: 'i4',
@@ -206,6 +227,8 @@ export const mockInsights: ClinicalInsight[] = [
     title: 'Recommended Clinical Tasks',
     content: 'Actions to consider based on this visit',
     confidence: 'high',
+    linkedSegmentIds: ['s7'],
+    explanation: 'Tasks are generated based on standard of care for diabetic patients presenting with new neuropathic symptoms.',
   },
 ];
 
@@ -215,18 +238,24 @@ export const mockDifferentialDiagnosis: DifferentialDiagnosis[] = [
     condition: 'Diabetic Peripheral Neuropathy',
     likelihood: 'likely',
     reasoning: 'Classic presentation in long-standing T2DM patient with bilateral symmetric sensory symptoms',
+    linkedSegmentIds: ['s2', 's4', 's6'],
+    explanation: 'The patient describes bilateral distal sensory symptoms (tingling, numbness) with nighttime predominance, which is characteristic of diabetic peripheral neuropathy.',
   },
   {
     id: 'd2',
     condition: 'Peripheral Vascular Disease',
     likelihood: 'probable',
     reasoning: 'Cold sensation and T2DM history suggest possible vascular component',
+    linkedSegmentIds: ['s6'],
+    explanation: 'The subjective cold sensation in feet, combined with diabetes as a major cardiovascular risk factor, raises concern for concurrent peripheral vascular disease.',
   },
   {
     id: 'd3',
     condition: 'B12 Deficiency Neuropathy',
     likelihood: 'possible',
     reasoning: 'Metformin use associated with B12 deficiency; consider screening',
+    linkedSegmentIds: ['s7', 's8'],
+    explanation: 'Long-term Metformin use is associated with decreased B12 absorption. This should be excluded as a contributing factor to the neuropathy symptoms.',
   },
 ];
 
@@ -237,6 +266,7 @@ export const mockSafetyAlerts: SafetyAlert[] = [
     title: 'B12 Monitoring Required',
     description: 'Long-term Metformin use may cause B12 deficiency. Consider annual B12 level monitoring.',
     severity: 'medium',
+    linkedSegmentIds: ['s7', 's8'],
   },
   {
     id: 'sa2',
@@ -244,16 +274,18 @@ export const mockSafetyAlerts: SafetyAlert[] = [
     title: 'Foot Care Assessment Needed',
     description: 'Neuropathy symptoms increase risk of foot ulcers and infections in diabetic patients.',
     severity: 'high',
+    linkedSegmentIds: ['s2', 's4'],
   },
 ];
 
+// Enhanced Clinical Tasks with implicit detection
 export const mockClinicalTasks: ClinicalTask[] = [
-  { id: 'ct1', task: 'Order HbA1c test', priority: 'high', completed: false },
-  { id: 'ct2', task: 'Perform monofilament foot exam', priority: 'high', completed: false },
-  { id: 'ct3', task: 'Check B12 levels', priority: 'medium', completed: false },
-  { id: 'ct4', task: 'Order nerve conduction study if symptoms persist', priority: 'medium', completed: false },
-  { id: 'ct5', task: 'Refer to diabetic foot clinic', priority: 'low', completed: false },
-  { id: 'ct6', task: 'Schedule follow-up in 4 weeks', priority: 'medium', completed: false },
+  { id: 'ct1', task: 'Order HbA1c test', priority: 'high', completed: false, isImplicit: false, source: 'explicit', linkedSegmentId: 's7' },
+  { id: 'ct2', task: 'Perform monofilament foot exam', priority: 'high', completed: false, isImplicit: false, source: 'explicit', linkedSegmentId: 's7' },
+  { id: 'ct3', task: 'Check B12 levels', priority: 'medium', completed: false, isImplicit: true, source: 'inferred', linkedSegmentId: 's8' },
+  { id: 'ct4', task: 'Order nerve conduction study if symptoms persist', priority: 'medium', completed: false, isImplicit: true, source: 'inferred', linkedSegmentId: 's4' },
+  { id: 'ct5', task: 'Refer to diabetic foot clinic', priority: 'low', completed: false, isImplicit: true, source: 'inferred', linkedSegmentId: 's2' },
+  { id: 'ct6', task: 'Schedule follow-up in 4 weeks', priority: 'medium', completed: false, isImplicit: false, source: 'explicit' },
 ];
 
 // Mock Corrections
@@ -292,6 +324,7 @@ export interface PreviousSummary {
   title: string;
   content: string;
   createdAt: Date;
+  visitType?: VisitType;
 }
 
 export const mockPreviousSummaries: PreviousSummary[] = [
@@ -301,6 +334,7 @@ export const mockPreviousSummaries: PreviousSummary[] = [
     patientName: 'Sarah Johnson',
     type: 'soap',
     title: 'SOAP Note - Diabetic Follow-up',
+    visitType: 'follow-up',
     content: `SUBJECTIVE:
 Mrs. Sarah Johnson, a 45-year-old female with a history of Type 2 Diabetes Mellitus, presents for follow-up. She reports new-onset tingling sensation in bilateral feet for approximately 2 weeks.
 
@@ -324,6 +358,7 @@ PLAN:
     patientName: 'Sarah Johnson',
     type: 'progress',
     title: 'Progress Note - Neuropathy Assessment',
+    visitType: 'follow-up',
     content: `Patient continues to experience bilateral foot tingling. Started on Gabapentin 100mg TID for symptom management. HbA1c result: 7.2% - fair control. Will continue current diabetes regimen and reassess in 6 weeks.`,
     createdAt: new Date('2023-10-20'),
   },
@@ -333,6 +368,7 @@ PLAN:
     patientName: 'Michael Chen',
     type: 'soap',
     title: 'SOAP Note - Cardiology Follow-up',
+    visitType: 'follow-up',
     content: `SUBJECTIVE:
 Mr. Chen reports stable angina with occasional chest tightness during exertion. Denies rest pain.
 
@@ -352,6 +388,7 @@ Continue current medications. Stress test in 3 months.`,
     patientName: 'Emily Rodriguez',
     type: 'progress',
     title: 'Progress Note - Anxiety Management',
+    visitType: 'mental-health',
     content: `Patient reports improved anxiety symptoms with current SSRI regimen. Sleep quality has improved. Continue Sertraline 50mg daily. Next follow-up in 8 weeks.`,
     createdAt: new Date('2024-01-18'),
   },
@@ -361,14 +398,232 @@ Continue current medications. Stress test in 3 months.`,
     patientName: 'James Thompson',
     type: 'discharge',
     title: 'Discharge Summary - COPD Exacerbation',
+    visitType: 'post-op',
     content: `Patient admitted for COPD exacerbation. Treated with IV steroids and nebulizers. Symptoms improved. Discharged on oral prednisone taper and increased inhaler frequency. Follow-up with pulmonology in 1 week.`,
     createdAt: new Date('2024-01-12'),
   },
 ];
 
-// Mock Summary
+// Mock Ambient Session
+export const mockAmbientSession: AmbientSession = {
+  id: 'amb1',
+  startTime: new Date(),
+  isActive: true,
+  clinicalMoments: [],
+  segments: [],
+  visitType: undefined,
+  patientId: undefined,
+};
+
+// Mock Ambient Segments with clinical filtering
+export const mockAmbientSegments: TranscriptSegment[] = [
+  { id: 'as1', startTime: 0, endTime: 5, text: 'Good morning Mrs Johnson. How are you feeling today?', speaker: 'Doctor', speakerRole: 'clinician', isClinical: true, confidenceScore: 0.95 },
+  { id: 'as2', startTime: 5, endTime: 10, text: "Oh the weather is lovely today isn't it?", speaker: 'Patient', speakerRole: 'patient', isClinical: false, confidenceScore: 0.88, isRedacted: true, redactedReason: 'Small talk detected' },
+  { id: 'as3', startTime: 10, endTime: 18, text: "I've been having this tingling in my feet for about two weeks now.", speaker: 'Patient', speakerRole: 'patient', isClinical: true, confidenceScore: 0.94 },
+  { id: 'as4', startTime: 18, endTime: 25, text: "Tell me more about that. Is it constant or does it come and go?", speaker: 'Doctor', speakerRole: 'clinician', isClinical: true, confidenceScore: 0.97 },
+  { id: 'as5', startTime: 25, endTime: 33, text: "It's worse at night, especially when I'm trying to sleep.", speaker: 'Patient', speakerRole: 'patient', isClinical: true, confidenceScore: 0.91 },
+  { id: 'as6', startTime: 33, endTime: 38, text: "My daughter says I should try those special socks she saw online.", speaker: 'Patient', speakerRole: 'patient', isClinical: false, confidenceScore: 0.72, isRedacted: true, redactedReason: 'Non-clinical reference' },
+];
+
+// Mock Clinical Moments for Ambient Mode
+export const mockClinicalMoments: ClinicalMoment[] = [
+  { id: 'cm1', timestamp: 10, type: 'symptom', content: 'Tingling in feet - 2 weeks duration', confidence: 0.94, segmentId: 'as3' },
+  { id: 'cm2', timestamp: 25, type: 'symptom', content: 'Symptoms worse at night', confidence: 0.91, segmentId: 'as5' },
+  { id: 'cm3', timestamp: 18, type: 'question', content: 'Clinician inquired about symptom pattern', confidence: 0.97, segmentId: 'as4' },
+];
+
+// Mock Clinician Style Profile
+export const mockStyleProfile: ClinicianStyleProfile = {
+  id: 'sp1',
+  clinicianId: 'dr1',
+  noteLength: 'moderate',
+  tone: 'clinical',
+  formatting: 'structured',
+  preferredTerminology: ['bilateral', 'presents with', 'denies', 'endorses'],
+  abbreviationPreference: 'mixed',
+  editHistory: [
+    { id: 'se1', timestamp: new Date('2024-01-10'), originalText: 'The patient said', editedText: 'Patient reports', type: 'tone' },
+    { id: 'se2', timestamp: new Date('2024-01-12'), originalText: 'blood pressure was normal', editedText: 'BP 120/80 mmHg', type: 'formatting' },
+  ],
+  learningProgress: 68,
+};
+
+// Mock Refinement Versions
+export const mockRefinementVersions: RefinementVersion[] = [
+  {
+    id: 'rv1',
+    version: 1,
+    timestamp: new Date('2024-01-15T09:00:00'),
+    content: mockPreviousSummaries[0].content,
+    changes: [],
+    author: 'ai',
+  },
+  {
+    id: 'rv2',
+    version: 2,
+    timestamp: new Date('2024-01-15T09:15:00'),
+    content: mockPreviousSummaries[0].content.replace('peripheral neuropathy', 'diabetic peripheral neuropathy (DPN)'),
+    changes: [
+      { id: 'rc1', type: 'diagnosis-clarification', originalText: 'peripheral neuropathy', newText: 'diabetic peripheral neuropathy (DPN)', reason: 'Clarified diagnosis classification' },
+    ],
+    author: 'ai',
+  },
+  {
+    id: 'rv3',
+    version: 3,
+    timestamp: new Date('2024-01-15T09:30:00'),
+    content: mockPreviousSummaries[0].content.replace('Follow-up in 4 weeks', 'Return visit in 4 weeks to review B12 results and assess neuropathy progression'),
+    changes: [
+      { id: 'rc2', type: 'plan-rewording', originalText: 'Follow-up in 4 weeks', newText: 'Return visit in 4 weeks to review B12 results and assess neuropathy progression', reason: 'Added specific follow-up objectives' },
+    ],
+    author: 'clinician',
+  },
+];
+
+// Mock Quality Warnings
+export const mockQualityWarnings: QualityWarning[] = [
+  {
+    id: 'qw1',
+    type: 'overlapping-speech',
+    message: 'Overlapping speech detected - transcript may be incomplete',
+    severity: 'medium',
+    affectedSegmentIds: ['s4'],
+    timestamp: 25,
+  },
+  {
+    id: 'qw2',
+    type: 'background-noise',
+    message: 'Background noise affected transcription quality',
+    severity: 'low',
+    affectedSegmentIds: ['s6'],
+    timestamp: 45,
+  },
+];
+
+// Mock Quality Warnings for poor audio scenario
+export const mockPoorAudioWarnings: QualityWarning[] = [
+  {
+    id: 'qwp1',
+    type: 'poor-audio',
+    message: 'Audio quality is poor - some segments may be inaccurate',
+    severity: 'high',
+    affectedSegmentIds: ['s2', 's3', 's4'],
+  },
+  {
+    id: 'qwp2',
+    type: 'unclear-segment',
+    message: 'Unable to confidently transcribe this segment',
+    severity: 'high',
+    affectedSegmentIds: ['s5'],
+    timestamp: 38,
+  },
+];
+
+// Mock Recent Transcriptions (enhanced with patient linking)
+export const mockRecentTranscriptions: RecentTranscription[] = [
+  {
+    id: 'rt1',
+    title: 'Sarah Johnson - Diabetic Follow-up - Neuropathy Symptoms',
+    patientId: 'p1',
+    patientName: 'Sarah Johnson',
+    visitType: 'follow-up',
+    timestamp: new Date('2024-01-15T09:30:00'),
+    duration: 420,
+    status: 'completed',
+    hasQualityIssues: false,
+  },
+  {
+    id: 'rt2',
+    title: 'Michael Chen - Cardiology Check - Stable Angina Review',
+    patientId: 'p2',
+    patientName: 'Michael Chen',
+    visitType: 'follow-up',
+    timestamp: new Date('2024-01-14T14:15:00'),
+    duration: 540,
+    status: 'completed',
+    hasQualityIssues: false,
+  },
+  {
+    id: 'rt3',
+    title: 'Emily Rodriguez - Mental Health Session - Anxiety Follow-up',
+    patientId: 'p3',
+    patientName: 'Emily Rodriguez',
+    visitType: 'mental-health',
+    timestamp: new Date('2024-01-13T11:00:00'),
+    duration: 1800,
+    status: 'completed',
+    hasQualityIssues: false,
+  },
+  {
+    id: 'rt4',
+    title: 'James Thompson - Post-Discharge - COPD Review',
+    patientId: 'p4',
+    patientName: 'James Thompson',
+    visitType: 'post-op',
+    timestamp: new Date('2024-01-12T16:45:00'),
+    duration: 360,
+    status: 'completed',
+    hasQualityIssues: true,
+  },
+  {
+    id: 'rt5',
+    title: 'Unlinked Session - Initial Consultation',
+    patientId: undefined,
+    patientName: undefined,
+    visitType: 'new-patient',
+    timestamp: new Date('2024-01-11T10:00:00'),
+    duration: 900,
+    status: 'completed',
+    hasQualityIssues: false,
+  },
+];
+
+// Visit Type Templates
+export const visitTypeTemplates: Record<VisitType, { sections: string[]; focusAreas: string[] }> = {
+  'new-patient': {
+    sections: ['Chief Complaint', 'History of Present Illness', 'Past Medical History', 'Social History', 'Family History', 'Review of Systems', 'Physical Examination', 'Assessment', 'Plan'],
+    focusAreas: ['Complete history', 'Baseline vitals', 'Allergies', 'Medications'],
+  },
+  'follow-up': {
+    sections: ['Interval History', 'Current Medications', 'Vital Signs', 'Focused Examination', 'Assessment', 'Plan'],
+    focusAreas: ['Symptom changes', 'Medication adherence', 'Lab results'],
+  },
+  'post-op': {
+    sections: ['Procedure Review', 'Post-operative Course', 'Current Status', 'Wound Assessment', 'Plan'],
+    focusAreas: ['Complications', 'Pain management', 'Recovery progress'],
+  },
+  'mental-health': {
+    sections: ['Mood Assessment', 'Sleep/Appetite', 'Medication Review', 'Safety Assessment', 'Therapeutic Progress', 'Plan'],
+    focusAreas: ['Suicidal ideation', 'Medication side effects', 'Functional status'],
+  },
+  'urgent': {
+    sections: ['Chief Complaint', 'History of Present Illness', 'Vital Signs', 'Focused Examination', 'Immediate Assessment', 'Urgent Plan'],
+    focusAreas: ['Red flags', 'Immediate interventions', 'Disposition'],
+  },
+  'routine': {
+    sections: ['Health Maintenance', 'Vital Signs', 'Screening Review', 'Assessment', 'Preventive Care Plan'],
+    focusAreas: ['Screenings due', 'Immunizations', 'Lifestyle counseling'],
+  },
+  'telehealth': {
+    sections: ['Chief Complaint', 'Interval History', 'Patient-Reported Vitals', 'Visual Assessment', 'Assessment', 'Plan'],
+    focusAreas: ['Limitations noted', 'In-person follow-up needs'],
+  },
+};
+
+// Conservative Trust Language Rules
+export const trustLanguageRules = {
+  avoidPhrases: ['definitely', 'certainly', 'clearly', 'obviously', 'must be', 'is definitely'],
+  preferredPhrases: ['may suggest', 'is consistent with', 'could indicate', 'appears to be', 'likely represents', 'consider'],
+  probabilisticPhrasing: {
+    high: 'findings strongly suggest',
+    medium: 'findings are consistent with',
+    low: 'consider the possibility of',
+  },
+};
+
+// Mock Summary with conservative language
 export const mockSOAPNote = `SUBJECTIVE:
-Mrs. Sarah Johnson, a 45-year-old female with a history of Type 2 Diabetes Mellitus, presents for follow-up. She reports new-onset tingling sensation in bilateral feet for approximately 2 weeks, described as "pins and needles" primarily affecting the toes with occasional extension to the ankles. Symptoms are worse at night. She also notes intermittent numbness and a subjective cold sensation in the feet. The patient confirms good medication compliance with Metformin 1000mg twice daily with meals.
+Mrs. Sarah Johnson, a 45-year-old female with a history of Type 2 Diabetes Mellitus, presents for follow-up. She reports new-onset tingling sensation in bilateral feet for approximately 2 weeks, described as "pins and needles" primarily affecting the toes with occasional extension to the ankles. Symptoms appear to be worse at night. She also notes intermittent numbness and a subjective cold sensation in the feet. The patient confirms good medication compliance with Metformin 1000mg twice daily with meals.
 
 OBJECTIVE:
 (To be completed after examination)
@@ -378,12 +633,12 @@ OBJECTIVE:
 
 ASSESSMENT:
 1. Type 2 Diabetes Mellitus - on Metformin
-2. New-onset bilateral lower extremity paresthesias - concerning for diabetic peripheral neuropathy
+2. New-onset bilateral lower extremity paresthesias - findings are consistent with diabetic peripheral neuropathy
 
 Differential Diagnosis:
-- Diabetic peripheral neuropathy (most likely)
-- Peripheral vascular disease
-- B12 deficiency secondary to Metformin use
+- Diabetic peripheral neuropathy (most likely given presentation)
+- Peripheral vascular disease (consider given cold sensation)
+- B12 deficiency secondary to Metformin use (should be excluded)
 
 PLAN:
 1. Order HbA1c to assess glycemic control
@@ -393,3 +648,27 @@ PLAN:
 5. Diabetes foot care education
 6. Refer to diabetic foot clinic for preventive care
 7. Follow-up in 4 weeks to review results and symptom progression`;
+
+// Confidence Suppression Mock Data
+export const mockSuppressedInsights: ClinicalInsight[] = [
+  {
+    id: 'si1',
+    type: 'diagnosis',
+    title: 'Possible Charcot Foot',
+    content: 'Early Charcot neuroarthropathy cannot be excluded',
+    confidence: 'low',
+    isSuppressed: true,
+    suppressionReason: 'Confidence score (32%) below threshold. Insufficient clinical evidence in transcript.',
+    linkedSegmentIds: ['s4'],
+  },
+  {
+    id: 'si2',
+    type: 'finding',
+    title: 'Possible Vitamin D Deficiency',
+    content: 'May contribute to neuropathy symptoms',
+    confidence: 'low',
+    isSuppressed: true,
+    suppressionReason: 'Confidence score (28%) below threshold. No direct evidence in patient report.',
+    linkedSegmentIds: [],
+  },
+];

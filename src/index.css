@@ -192,6 +192,36 @@
     }
   }
 
+  /* Ambient mode animation */
+  .ambient-pulse {
+    animation: ambientPulse 3s ease-in-out infinite;
+  }
+
+  @keyframes ambientPulse {
+    0%, 100% { 
+      opacity: 1;
+      box-shadow: 0 0 0 0 hsl(var(--accent) / 0.3);
+    }
+    50% { 
+      opacity: 0.8;
+      box-shadow: 0 0 20px 5px hsl(var(--accent) / 0.15);
+    }
+  }
+
+  /* Wave animation for listening indicator */
+  @keyframes wave {
+    0%, 100% { transform: scaleY(0.5); }
+    50% { transform: scaleY(1.5); }
+  }
+
+  .animate-wave {
+    animation: wave 1s ease-in-out infinite;
+  }
+
+  .animate-pulse-gentle {
+    animation: pulse 2s ease-in-out infinite;
+  }
+
   /* Smooth transcript scroll */
   .transcript-scroll {
     scroll-behavior: smooth;
