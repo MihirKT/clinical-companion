@@ -1,12 +1,63 @@
 import React from 'react';
 import { UploadCard } from '@/components/capture/UploadCard';
 import { LiveTranscriptionCard } from '@/components/capture/LiveTranscriptionCard';
+import { AmbientModeToggle } from '@/components/capture/AmbientModeToggle';
+import { MinimalModeToggle } from '@/components/capture/MinimalModeToggle';
+import { VisitTypeSelector } from '@/components/capture/VisitTypeSelector';
+import { PatientLinkSelector } from '@/components/capture/PatientLinkSelector';
+import { MinimalCaptureView } from '@/components/capture/MinimalCaptureView';
 import { QuickStats } from '@/components/dashboard/QuickStats';
 import { RecentTranscriptions } from '@/components/dashboard/RecentTranscriptions';
 import { QuickActions } from '@/components/dashboard/QuickActions';
-import { Lightbulb } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Lightbulb, Settings2 } from 'lucide-react';
+import { useWorkflow } from '@/context/WorkflowContext';
 
 export function CapturePage() {
+  const { isRecording, isMinimalMode, setIsMinimalMode, setCurrentStep, setCurrentTranscript, markStepComplete, setIsRecording } = useWorkflow();
+  const [elapsedTime, setElapsedTime] = React.useState(0);
+
+  // Timer for minimal mode
+  React.useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isRecording && isMinimalMode) {
+      interval = setInterval(() => {
+        setElapsedTime(prev => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isRecording, isMinimalMode]);
+
+  const handleExpandFromMinimal = () => {
+    setIsMinimalMode(false);
+  };
+
+  const handleStopFromMinimal = () => {
+    setIsRecording(false);
+    setIsMinimalMode(false);
+    markStepComplete('capture');
+    setCurrentStep('review');
+  };
+
+  // Show minimal view when recording in minimal mode
+  if (isRecording && isMinimalMode) {
+    return (
+      <div className="animate-fade-in h-full flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center mx-auto ambient-pulse">
+            <div className="w-3 h-3 rounded-full bg-accent animate-pulse" />
+          </div>
+          <p className="text-muted-foreground">Recording in minimal mode...</p>
+        </div>
+        <MinimalCaptureView 
+          onExpand={handleExpandFromMinimal}
+          onStop={handleStopFromMinimal}
+          elapsedTime={elapsedTime}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="animate-fade-in space-y-8">
       {/* Header with Quick Actions */}
@@ -24,6 +75,31 @@ export function CapturePage() {
 
       {/* Quick Stats */}
       <QuickStats />
+
+      {/* Capture Configuration */}
+      <Card className="clinical-card">
+        <CardHeader className="pb-4">
+          <div className="flex items-center gap-2">
+            <Settings2 className="w-5 h-5 text-primary" />
+            <CardTitle className="text-lg">Session Configuration</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Ambient Mode Toggle */}
+          <AmbientModeToggle />
+          
+          <div className="grid md:grid-cols-2 gap-4">
+            {/* Visit Type */}
+            <VisitTypeSelector />
+            
+            {/* Patient Link */}
+            <PatientLinkSelector />
+          </div>
+          
+          {/* Minimal Mode */}
+          <MinimalModeToggle />
+        </CardContent>
+      </Card>
 
       {/* Main Capture Options */}
       <div>
@@ -48,8 +124,8 @@ export function CapturePage() {
         <div>
           <p className="text-sm font-medium text-foreground">Pro Tip</p>
           <p className="text-sm text-muted-foreground">
-            Use the <kbd className="px-1.5 py-0.5 text-xs bg-muted rounded border border-border">Patient Hub</kbd> to attach transcriptions to patient records, 
-            or <kbd className="px-1.5 py-0.5 text-xs bg-muted rounded border border-border">Corrections</kbd> to improve AI accuracy with medical terminology.
+            Enable <strong>Ambient Mode</strong> for hands-free capture that automatically filters small talk and extracts clinical moments.
+            Use <strong>Low-Interaction Mode</strong> to minimize distractions during consultations.
           </p>
         </div>
       </div>
