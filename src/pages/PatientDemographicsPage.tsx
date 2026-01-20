@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, User, AlertTriangle, Calendar, Phone, FileText, Activity, Pill, Heart, Sparkles, Edit2, Save, X, ChevronDown, ChevronUp, Copy, Check } from 'lucide-react';
+import { ArrowLeft, User, AlertTriangle, Calendar, Phone, FileText, Activity, Pill, Heart, Sparkles, Edit2,Edit, Save, X, ChevronDown, ChevronUp, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +19,8 @@ export function PatientDemographicsPage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
   const [isEditing, setIsEditing] = useState(false);
+  const [isEditingDemo, setIsEditingDemo] = useState(false);
+  const [editedPatient, setEditedPatient] = useState(selectedPatient);
   const [expandedVisitId, setExpandedVisitId] = useState<string | null>(null);
   const [expandedSummaryId, setExpandedSummaryId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -79,7 +81,8 @@ export function PatientDemographicsPage() {
   };
 
   const handleCancelEdit = () => {
-    setIsEditing(false);
+    setIsEditingDemo(false);
+    setEditedPatient(selectedPatient);
   };
 
   const handleCopy = (content: string, id: string) => {
@@ -98,6 +101,23 @@ export function PatientDemographicsPage() {
       day: 'numeric',
       year: 'numeric',
     }).format(date);
+  };
+
+const handleEditDemographics = () => {
+    setIsEditingDemo(true);
+    setEditedPatient(selectedPatient);
+  };
+
+ const handleFieldChange = (
+    field: keyof typeof editedPatient,
+    value: string | number,
+  ) => {
+    if (editedPatient) {
+      setEditedPatient({
+        ...editedPatient,
+        [field]: value,
+      });
+    }
   };
 
   return (
@@ -138,7 +158,7 @@ export function PatientDemographicsPage() {
               </div>
             </div>
             {/* Edit Button */}
-            <Button
+            {/* <Button
               variant="outline"
               size="sm"
               onClick={handleStartEdit}
@@ -146,7 +166,7 @@ export function PatientDemographicsPage() {
             >
               <Edit2 className="w-4 h-4" />
               Edit
-            </Button>
+            </Button> */}
           </div>
 
           {/* AI Summary */}
@@ -182,11 +202,22 @@ export function PatientDemographicsPage() {
       </Card>
 
       {/* Edit Modal/Form */}
-      {isEditing && (
+      {/* {isEditing && (
         <Card className="clinical-card border-primary/30">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base">Edit Patient Demographics</CardTitle>
+                  {!isEditingDemo && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1"
+                      onClick={handleEditDemographics}
+                    >
+                      <Edit className="w-4 h-4" />
+                      Edit
+                    </Button>
+                  )}             
               <Button variant="ghost" size="icon-sm" onClick={handleCancelEdit}>
                 <X className="w-4 h-4" />
               </Button>
@@ -248,7 +279,7 @@ export function PatientDemographicsPage() {
             </div>
           </CardContent>
         </Card>
-      )}
+      )} */}
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -274,41 +305,172 @@ export function PatientDemographicsPage() {
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6 mt-6">
           <div className="grid md:grid-cols-2 gap-6">
-            {/* Demographics */}
+{/* Demographics */}
             <Card className="clinical-card">
               <CardHeader>
-                <CardTitle className="text-base">Demographics</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base">Demographics</CardTitle>
+                  {!isEditingDemo && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1"
+                      onClick={handleEditDemographics}
+                    >
+                      <Edit className="w-4 h-4" />
+                      Edit
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="flex justify-between items-center py-2 border-b border-border">
-                  <span className="text-sm text-muted-foreground">Full Name</span>
-                  <span className="text-sm font-medium">{selectedPatient.name}</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-border">
-                  <span className="text-sm text-muted-foreground">Age</span>
-                  <span className="text-sm font-medium">{selectedPatient.age} years</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-border">
-                  <span className="text-sm text-muted-foreground">Gender</span>
-                  <span className="text-sm font-medium capitalize">{selectedPatient.gender}</span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-border">
-                  <span className="text-sm text-muted-foreground">Medical ID</span>
-                  <span className="text-sm font-mono">{selectedPatient.medicalId}</span>
-                </div>
-                {selectedPatient.contact && (
-                  <div className="flex justify-between items-center py-2">
-                    <span className="text-sm text-muted-foreground">Contact</span>
-                    <span className="text-sm font-medium">{selectedPatient.contact}</span>
-                  </div>
+                {isEditingDemo ? (
+                  <>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-xs text-muted-foreground block mb-1">
+                          Full Name
+                        </label>
+                        <Input
+                          value={editedPatient?.name || ""}
+                          onChange={(e) =>
+                            handleFieldChange("name", e.target.value)
+                          }
+                          className="text-sm"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs text-muted-foreground block mb-1">
+                            Age
+                          </label>
+                          <Input
+                            type="number"
+                            value={editedPatient?.age || ""}
+                            onChange={(e) =>
+                              handleFieldChange("age", parseInt(e.target.value))
+                            }
+                            className="text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs text-muted-foreground block mb-1">
+                            Gender
+                          </label>
+                          <Input
+                            value={editedPatient?.gender || ""}
+                            onChange={(e) =>
+                              handleFieldChange("gender", e.target.value)
+                            }
+                            className="text-sm capitalize"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground block mb-1">
+                          Medical ID
+                        </label>
+                        <Input
+                          value={editedPatient?.medicalId || ""}
+                          onChange={(e) =>
+                            handleFieldChange("medicalId", e.target.value)
+                          }
+                          className="text-sm font-mono"
+                          disabled
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground block mb-1">
+                          Contact
+                        </label>
+                        <Input
+                          value={editedPatient?.contact || ""}
+                          onChange={(e) =>
+                            handleFieldChange("contact", e.target.value)
+                          }
+                          className="text-sm"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex gap-2 pt-3 border-t border-border">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        className="flex-1 gap-1"
+                        onClick={handleSaveEdit}
+                      >
+                        <Check className="w-4 h-4" />
+                        Save
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1 gap-1"
+                        onClick={handleCancelEdit}
+                      >
+                        <X className="w-4 h-4" />
+                        Cancel
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex justify-between items-center py-2 border-b border-border">
+                      <span className="text-sm text-muted-foreground">
+                        Full Name
+                      </span>
+                      <span className="text-sm font-medium">
+                        {selectedPatient?.name}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-border">
+                      <span className="text-sm text-muted-foreground">Age</span>
+                      <span className="text-sm font-medium">
+                        {selectedPatient?.age} years
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-border">
+                      <span className="text-sm text-muted-foreground">
+                        Gender
+                      </span>
+                      <span className="text-sm font-medium capitalize">
+                        {selectedPatient?.gender}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-b border-border">
+                      <span className="text-sm text-muted-foreground">
+                        Medical ID
+                      </span>
+                      <span className="text-sm font-mono">
+                        {selectedPatient?.medicalId}
+                      </span>
+                    </div>
+                    {selectedPatient?.contact && (
+                      <div className="flex justify-between items-center py-2">
+                        <span className="text-sm text-muted-foreground">
+                          Contact
+                        </span>
+                        <span className="text-sm font-medium">
+                          {selectedPatient.contact}
+                        </span>
+                      </div>
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>
 
+
             {/* Visit Records */}
             <Card className="clinical-card">
               <CardHeader>
+                <div className="flex items-center justify-between">
                 <CardTitle className="text-base">Visit Records</CardTitle>
+                 <Button variant="outline" size="sm" className="gap-1">
+                    <FileText className="w-4 h-4" />
+                    Full Summary
+                  </Button>
+                  </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">

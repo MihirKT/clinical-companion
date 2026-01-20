@@ -4,7 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { UploadCard } from '@/components/capture/UploadCard';
 import { LiveTranscriptionCard } from '@/components/capture/LiveTranscriptionCard';
-import { PatientLinkSelector } from '@/components/capture/PatientLinkSelector';
+// import { PatientLinkSelector } from '@/components/capture/PatientLinkSelector';
+import { PatientLinkButton } from "@/components/capture/PatientLinkButton";
+import { PatientInfoBadge } from "@/components/capture/PatientInfoBadge";
 import { QuickStats } from '@/components/dashboard/QuickStats';
 import { RecentTranscriptions } from '@/components/dashboard/RecentTranscriptions';
 import { QuickActions } from '@/components/dashboard/QuickActions';
@@ -45,28 +47,35 @@ export function CapturePage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-semibold text-foreground">Capture Audio</h2>
+          <h2 className="text-2xl font-semibold text-foreground">
+            Good Morning, Doctor 👋
+          </h2>
           <p className="text-muted-foreground mt-1">
-            Upload an audio file or start a live recording
+            Start a new transcription or review recent sessions
           </p>
         </div>
-        <Button
-          onClick={handleNext}
-          disabled={!hasContent}
-          variant="clinical"
-          size="lg"
-          className="gap-2 self-start sm:self-auto"
-        >
-          Next: Review
-          <ArrowRight className="w-4 h-4" />
-        </Button>
+        <div className="flex items-center gap-3">
+          <PatientLinkButton onSelectPatient={setSelectedPatient} showLabel />
+          
+        </div>
       </div>
+
+      {/* Selected Patient Info */}
+      {selectedPatient && (
+        <div>
+          <PatientInfoBadge
+            patient={selectedPatient}
+            onRemove={() => setSelectedPatient(null)}
+            variant="default"
+          />
+        </div>
+      )}
 
       {/* Quick Stats Dashboard */}
       <QuickStats />
 
       {/* Linked Patient Badge - Persistent */}
-      {linkedPatient && (
+      {/* {linkedPatient && (
         <div className="flex items-center gap-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
           <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
             <span className="text-sm font-semibold text-primary">
@@ -89,21 +98,18 @@ export function CapturePage() {
             Change
           </Button>
         </div>
-      )}
+      )} */}
 
       {/* Patient Selection - Only show if no patient linked */}
-      {!linkedPatient && (
+      {/* {!linkedPatient && (
         <PatientLinkSelector />
-      )}
+      )} */}
 
       {/* Main Capture Cards */}
       <div className="grid lg:grid-cols-2 gap-6">
         <UploadCard />
         <LiveTranscriptionCard />
       </div>
-
-      {/* Quick Actions */}
-      <QuickActions />
 
       {/* Recent Transcriptions */}
       <RecentTranscriptions />
