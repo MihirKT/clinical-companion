@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { UploadCard } from '@/components/capture/UploadCard';
 import { LiveTranscriptionCard } from '@/components/capture/LiveTranscriptionCard';
 import { PatientLinkSelector } from '@/components/capture/PatientLinkSelector';
-import { VisitTypeSelector } from '@/components/capture/VisitTypeSelector';
 import { QuickStats } from '@/components/dashboard/QuickStats';
 import { RecentTranscriptions } from '@/components/dashboard/RecentTranscriptions';
 import { QuickActions } from '@/components/dashboard/QuickActions';
@@ -92,11 +91,10 @@ export function CapturePage() {
         </div>
       )}
 
-      {/* Patient & Visit Type Selection */}
-      <div className="grid sm:grid-cols-2 gap-4">
+      {/* Patient Selection - Only show if no patient linked */}
+      {!linkedPatient && (
         <PatientLinkSelector />
-        <VisitTypeSelector />
-      </div>
+      )}
 
       {/* Main Capture Cards */}
       <div className="grid lg:grid-cols-2 gap-6">

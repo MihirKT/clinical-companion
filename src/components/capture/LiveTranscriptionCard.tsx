@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Mic, Square, Clock, ChevronDown, ChevronUp, User } from 'lucide-react';
+import { Mic, Square, Clock, ChevronDown, ChevronUp, User, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,13 +7,18 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useWorkflow } from '@/context/WorkflowContext';
-import { mockTranscript } from '@/data/mockData';
+import { mockTranscript, mockPatients } from '@/data/mockData';
+import { useToast } from '@/hooks/use-toast';
 
 export function LiveTranscriptionCard() {
   const { isRecording, setIsRecording, setCurrentTranscript, linkedPatientId } = useWorkflow();
+  const { toast } = useToast();
   const [elapsedTime, setElapsedTime] = useState(0);
   const [transcriptLines, setTranscriptLines] = useState<string[]>([]);
   const [showTranscript, setShowTranscript] = useState(true);
+
+  // Get linked patient name
+  const linkedPatient = linkedPatientId ? mockPatients.find(p => p.id === linkedPatientId) : null;
 
   // Timer effect
   useEffect(() => {
@@ -46,6 +51,16 @@ export function LiveTranscriptionCard() {
   }, [isRecording]);
 
   const handleStartRecording = () => {
+    // Check if patient is linked
+    if (!linkedPatientId) {
+      toast({
+        variant: "destructive",
+        title: "Patient Required",
+        description: "Please link a patient before starting the recording.",
+      });
+      return;
+    }
+    
     setIsRecording(true);
     setElapsedTime(0);
     setTranscriptLines([]);
@@ -102,10 +117,18 @@ export function LiveTranscriptionCard() {
           </div>
 
           {/* Patient Linked Indicator */}
-          {linkedPatientId && (
+          {linkedPatient && (
             <div className="flex items-center gap-2 mt-2 px-3 py-1.5 bg-primary/5 rounded-md">
               <User className="w-3 h-3 text-primary" />
-              <span className="text-xs text-muted-foreground">Recording linked to patient</span>
+              <span className="text-xs text-muted-foreground">Recording for: <span className="font-medium text-foreground">{linkedPatient.name}</span></span>
+            </div>
+          )}
+          
+          {/* No Patient Warning */}
+          {!linkedPatientId && !isRecording && (
+            <div className="flex items-center gap-2 mt-2 px-3 py-1.5 bg-destructive/5 rounded-md border border-destructive/20">
+              <AlertCircle className="w-3 h-3 text-destructive" />
+              <span className="text-xs text-destructive">Please link a patient before recording</span>
             </div>
           )}
         </CardHeader>
@@ -126,7 +149,7 @@ export function LiveTranscriptionCard() {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Begin live audio transcription</p>
+                  <p>{linkedPatientId ? 'Begin live audio transcription' : 'Link a patient first to start recording'}</p>
                 </TooltipContent>
               </Tooltip>
             ) : (
