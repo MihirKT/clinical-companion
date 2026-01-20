@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { Clock, User, ArrowLeft, Search } from 'lucide-react';
+import { Clock, User, ArrowLeft, Search, FileText, Sparkles, ChevronDown, ChevronUp, Copy, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useWorkflow } from '@/context/WorkflowContext';
-import { TranscriptionDetailModal } from '@/components/dashboard/TranscriptionDetailModal';
-import { mockTranscript } from '@/data/mockData';
+import { mockTranscript, mockSOAPNote } from '@/data/mockData';
+import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 const allTranscriptions = [
   {
@@ -16,6 +19,7 @@ const allTranscriptions = [
     time: '10 min ago',
     status: 'completed' as const,
     date: '2024-01-15',
+    visitType: 'Follow-up',
   },
   {
     id: '2',
@@ -24,6 +28,7 @@ const allTranscriptions = [
     time: '45 min ago',
     status: 'completed' as const,
     date: '2024-01-15',
+    visitType: 'Cardiology',
   },
   {
     id: '3',
@@ -32,6 +37,7 @@ const allTranscriptions = [
     time: '2 hours ago',
     status: 'reviewed' as const,
     date: '2024-01-15',
+    visitType: 'Mental Health',
   },
   {
     id: '4',
@@ -40,6 +46,7 @@ const allTranscriptions = [
     time: '4 hours ago',
     status: 'completed' as const,
     date: '2024-01-14',
+    visitType: 'Post-op',
   },
   {
     id: '5',
@@ -48,6 +55,7 @@ const allTranscriptions = [
     time: '1 day ago',
     status: 'reviewed' as const,
     date: '2024-01-14',
+    visitType: 'Routine',
   },
   {
     id: '6',
@@ -56,6 +64,7 @@ const allTranscriptions = [
     time: '2 days ago',
     status: 'completed' as const,
     date: '2024-01-13',
+    visitType: 'New Patient',
   },
   {
     id: '7',
@@ -64,6 +73,7 @@ const allTranscriptions = [
     time: '3 days ago',
     status: 'completed' as const,
     date: '2024-01-13',
+    visitType: 'Follow-up',
   },
   {
     id: '8',
@@ -72,6 +82,7 @@ const allTranscriptions = [
     time: '4 days ago',
     status: 'reviewed' as const,
     date: '2024-01-12',
+    visitType: 'Urgent',
   },
 ];
 
@@ -82,29 +93,41 @@ interface TranscriptionItem {
   time: string;
   status: 'completed' | 'reviewed';
   date: string;
+  visitType: string;
 }
 
 export function TranscriptionsPage() {
   const { setCurrentStep } = useWorkflow();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTranscription, setSelectedTranscription] = useState<TranscriptionItem | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [activeView, setActiveView] = useState<'transcript' | 'summary'>('transcript');
+  const [transcriptTab, setTranscriptTab] = useState<'raw' | 'enhanced'>('raw');
 
   const filteredTranscriptions = allTranscriptions.filter((t) =>
     t.patientName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleViewTranscription = (item: TranscriptionItem) => {
-    setSelectedTranscription(item);
-    setModalOpen(true);
-  };
-
-  const handleOpenInEditor = () => {
-    setCurrentStep('review');
+  const handleToggleExpand = (id: string) => {
+    if (expandedId === id) {
+      setExpandedId(null);
+    } else {
+      setExpandedId(id);
+      setActiveView('transcript');
+      setTranscriptTab('raw');
+    }
   };
 
   const handleBack = () => {
-    setCurrentStep('patient-hub');
+    setCurrentStep('capture');
+  };
+
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: 'Copied to Clipboard',
+      description: 'Content copied successfully.',
+    });
   };
 
   const getStatusBadge = (status: string) => {
@@ -150,31 +173,148 @@ export function TranscriptionsPage() {
           filteredTranscriptions.map((item) => (
             <Card
               key={item.id}
-              className="cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => handleViewTranscription(item)}
+              className={cn(
+                "transition-all duration-200",
+                expandedId === item.id && "ring-2 ring-primary/30"
+              )}
             >
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <User className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm text-foreground truncate">
-                        {item.patientName}
-                      </p>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-                        <Clock className="w-3 h-3 flex-shrink-0" />
-                        <span>{item.duration}</span>
-                        <span>•</span>
-                        <span>{item.time}</span>
+              <CardContent className="p-0">
+                {/* Header Row - Clickable */}
+                <div 
+                  className="p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+                  onClick={() => handleToggleExpand(item.id)}
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <User className="w-5 h-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm text-foreground truncate">
+                          {item.patientName}
+                        </p>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                          <Clock className="w-3 h-3 flex-shrink-0" />
+                          <span>{item.duration}</span>
+                          <span>•</span>
+                          <span>{item.time}</span>
+                          <span>•</span>
+                          <span>{item.visitType}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-3 flex-shrink-0">
-                    {getStatusBadge(item.status)}
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      {getStatusBadge(item.status)}
+                      {expandedId === item.id ? (
+                        <ChevronUp className="w-5 h-5 text-muted-foreground" />
+                      ) : (
+                        <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                      )}
+                    </div>
                   </div>
                 </div>
+
+                {/* Expanded Content */}
+                {expandedId === item.id && (
+                  <div className="border-t border-border p-4 space-y-4 animate-fade-in">
+                    {/* Toggle Buttons */}
+                    <div className="flex gap-2">
+                      <Button
+                        variant={activeView === 'transcript' ? 'default' : 'outline'}
+                        size="sm"
+                        className="gap-2"
+                        onClick={() => setActiveView('transcript')}
+                      >
+                        <FileText className="w-4 h-4" />
+                        Transcription
+                      </Button>
+                      <Button
+                        variant={activeView === 'summary' ? 'default' : 'outline'}
+                        size="sm"
+                        className="gap-2"
+                        onClick={() => setActiveView('summary')}
+                      >
+                        <Sparkles className="w-4 h-4" />
+                        Summary
+                      </Button>
+                    </div>
+
+                    {/* Transcription View */}
+                    {activeView === 'transcript' && (
+                      <div className="space-y-3">
+                        <Tabs value={transcriptTab} onValueChange={(v) => setTranscriptTab(v as 'raw' | 'enhanced')}>
+                          <div className="flex items-center justify-between">
+                            <TabsList className="grid w-64 grid-cols-2">
+                              <TabsTrigger value="raw">Raw</TabsTrigger>
+                              <TabsTrigger value="enhanced">AI Enhanced</TabsTrigger>
+                            </TabsList>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="gap-1"
+                              onClick={() => handleCopy(transcriptTab === 'raw' ? mockTranscript.rawText : mockTranscript.improvedText)}
+                            >
+                              <Copy className="w-3 h-3" />
+                              Copy
+                            </Button>
+                          </div>
+                          
+                          <TabsContent value="raw" className="mt-3">
+                            <ScrollArea className="h-[300px] border rounded-lg p-4 bg-muted/30">
+                              <div className="whitespace-pre-wrap text-sm leading-relaxed font-mono text-foreground">
+                                {mockTranscript.rawText}
+                              </div>
+                            </ScrollArea>
+                          </TabsContent>
+                          
+                          <TabsContent value="enhanced" className="mt-3">
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                              <Sparkles className="w-3 h-3" />
+                              <span>AI-improved for clarity and medical terminology</span>
+                            </div>
+                            <ScrollArea className="h-[300px] border rounded-lg p-4 bg-primary/5">
+                              <div className="whitespace-pre-wrap text-sm leading-relaxed font-mono text-foreground">
+                                {mockTranscript.improvedText}
+                              </div>
+                            </ScrollArea>
+                          </TabsContent>
+                        </Tabs>
+                      </div>
+                    )}
+
+                    {/* Summary View */}
+                    {activeView === 'summary' && (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Sparkles className="w-4 h-4 text-primary" />
+                            <span className="text-sm font-medium">SOAP Note</span>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="gap-1"
+                              onClick={() => handleCopy(mockSOAPNote)}
+                            >
+                              <Copy className="w-3 h-3" />
+                              Copy
+                            </Button>
+                            <Button variant="outline" size="sm" className="gap-1">
+                              <Download className="w-3 h-3" />
+                              Export
+                            </Button>
+                          </div>
+                        </div>
+                        <ScrollArea className="h-[300px] border rounded-lg p-4 bg-muted/30">
+                          <div className="whitespace-pre-wrap text-sm leading-relaxed font-mono text-foreground">
+                            {mockSOAPNote}
+                          </div>
+                        </ScrollArea>
+                      </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))
@@ -184,24 +324,6 @@ export function TranscriptionsPage() {
           </div>
         )}
       </div>
-
-      {/* Modal for transcription details */}
-      {selectedTranscription && (
-        <TranscriptionDetailModal
-          transcript={{
-            id: selectedTranscription.id,
-            rawText: mockTranscript.rawText,
-            improvedText: mockTranscript.improvedText,
-            segments: mockTranscript.segments,
-            duration: parseInt(selectedTranscription.duration),
-            createdAt: new Date(selectedTranscription.date),
-          }}
-          patientName={selectedTranscription.patientName}
-          open={modalOpen}
-          onOpenChange={setModalOpen}
-          onOpenInEditor={handleOpenInEditor}
-        />
-      )}
     </div>
   );
 }

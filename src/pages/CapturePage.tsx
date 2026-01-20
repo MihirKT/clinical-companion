@@ -1,73 +1,50 @@
-import React from "react";
-import { UploadCard } from "@/components/capture/UploadCard";
-import { LiveTranscriptionCard } from "@/components/capture/LiveTranscriptionCard";
-import { MinimalCaptureView } from "@/components/capture/MinimalCaptureView";
-import { QuickStats } from "@/components/dashboard/QuickStats";
-import { RecentTranscriptions } from "@/components/dashboard/RecentTranscriptions";
-import { QuickActions } from "@/components/dashboard/QuickActions";
-import { Lightbulb } from "lucide-react";
+import React from 'react';
+import { ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { UploadCard } from '@/components/capture/UploadCard';
+import { LiveTranscriptionCard } from '@/components/capture/LiveTranscriptionCard';
+// import { PatientLinkSelector } from '@/components/capture/PatientLinkSelector';
 import { PatientLinkButton } from "@/components/capture/PatientLinkButton";
 import { PatientInfoBadge } from "@/components/capture/PatientInfoBadge";
-import { useWorkflow } from "@/context/WorkflowContext";
+import { QuickStats } from '@/components/dashboard/QuickStats';
+import { RecentTranscriptions } from '@/components/dashboard/RecentTranscriptions';
+import { QuickActions } from '@/components/dashboard/QuickActions';
+import { useWorkflow } from '@/context/WorkflowContext';
+import { mockPatients } from '@/data/mockData';
 
 export function CapturePage() {
-  const {
-    isRecording,
-    isMinimalMode,
-    setIsMinimalMode,
-    setCurrentStep,
-    setCurrentTranscript,
-    markStepComplete,
-    setIsRecording,
+  const { 
+    setCurrentStep, 
+    markStepComplete, 
+    currentTranscript, 
+    audioFile,
     selectedPatient,
     setSelectedPatient,
+    linkedPatientId,
+    setLinkedPatientId,
   } = useWorkflow();
-  const [elapsedTime, setElapsedTime] = React.useState(0);
 
-  // Timer for minimal mode
-  React.useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isRecording && isMinimalMode) {
-      interval = setInterval(() => {
-        setElapsedTime((prev) => prev + 1);
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [isRecording, isMinimalMode]);
+  const hasContent = currentTranscript !== null || audioFile !== null;
 
-  const handleExpandFromMinimal = () => {
-    setIsMinimalMode(false);
+  const handleNext = () => {
+    markStepComplete('capture');
+    setCurrentStep('review');
   };
 
-  const handleStopFromMinimal = () => {
-    setIsRecording(false);
-    setIsMinimalMode(false);
-    markStepComplete("capture");
-    setCurrentStep("review");
+  const handleRemovePatient = () => {
+    setLinkedPatientId(null);
+    setSelectedPatient(null);
   };
 
-  // Show minimal view when recording in minimal mode
-  if (isRecording && isMinimalMode) {
-    return (
-      <div className="animate-fade-in h-full flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center mx-auto ambient-pulse">
-            <div className="w-3 h-3 rounded-full bg-accent animate-pulse" />
-          </div>
-          <p className="text-muted-foreground">Recording in minimal mode...</p>
-        </div>
-        <MinimalCaptureView
-          onExpand={handleExpandFromMinimal}
-          onStop={handleStopFromMinimal}
-          elapsedTime={elapsedTime}
-        />
-      </div>
-    );
-  }
+  // Get linked patient info
+  const linkedPatient = linkedPatientId 
+    ? mockPatients.find(p => p.id === linkedPatientId) 
+    : selectedPatient;
 
   return (
-    <div className="animate-fade-in space-y-8">
-      {/* Header with Quick Actions */}
+    <div className="animate-fade-in space-y-6">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-semibold text-foreground">
@@ -79,7 +56,7 @@ export function CapturePage() {
         </div>
         <div className="flex items-center gap-3">
           <PatientLinkButton onSelectPatient={setSelectedPatient} showLabel />
-          <QuickActions />
+          
         </div>
       </div>
 
@@ -94,43 +71,48 @@ export function CapturePage() {
         </div>
       )}
 
-      {/* Quick Stats */}
+      {/* Quick Stats Dashboard */}
       <QuickStats />
 
-      {/* Main Capture Options */}
-      <div>
-        <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-lg font-medium text-foreground">
-            Start New Session
-          </h3>
-          <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-            Choose one
-          </span>
+      {/* Linked Patient Badge - Persistent */}
+      {/* {linkedPatient && (
+        <div className="flex items-center gap-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+            <span className="text-sm font-semibold text-primary">
+              {linkedPatient.name.split(' ').map(n => n[0]).join('')}
+            </span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-medium text-sm text-foreground">{linkedPatient.name}</p>
+            <p className="text-xs text-muted-foreground">{linkedPatient.medicalId}</p>
+          </div>
+          <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">
+            Linked
+          </Badge>
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={handleRemovePatient}
+            className="text-muted-foreground hover:text-destructive"
+          >
+            Change
+          </Button>
         </div>
-        <div className="grid md:grid-cols-2 gap-6">
-          <UploadCard />
-          <LiveTranscriptionCard />
-        </div>
+      )} */}
+
+      {/* Patient Selection - Only show if no patient linked */}
+      {/* {!linkedPatient && (
+        <PatientLinkSelector />
+      )} */}
+
+      {/* Main Capture Cards */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        <UploadCard />
+        <LiveTranscriptionCard />
       </div>
 
       {/* Recent Transcriptions */}
       <RecentTranscriptions />
-
-      {/* Pro Tip */}
-      <div className="flex items-start gap-3 p-4 bg-accent/5 border border-accent/20 rounded-xl">
-        <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
-          <Lightbulb className="w-4 h-4 text-accent" />
-        </div>
-        <div>
-          <p className="text-sm font-medium text-foreground">Pro Tip</p>
-          <p className="text-sm text-muted-foreground">
-            Enable <strong>Ambient Mode</strong> for hands-free capture that
-            automatically filters small talk and extracts clinical moments. Use{" "}
-            <strong>Low-Interaction Mode</strong> to minimize distractions
-            during consultations.
-          </p>
-        </div>
-      </div>
     </div>
   );
 }
