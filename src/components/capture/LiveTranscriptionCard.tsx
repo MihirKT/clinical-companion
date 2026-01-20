@@ -1,79 +1,60 @@
-import React, { useState, useEffect, useRef } from 'react';
-<<<<<<< HEAD
-import { Mic, MicOff, Pause, Square, Info, Waves, Sparkles } from 'lucide-react';
-=======
-import { Mic, MicOff, Pause, Square, Info, AlertCircle } from 'lucide-react';
->>>>>>> 0aeffe3 (Add patient link, update patient hub/review UI, and expand mock data)
+import React, { useState, useEffect } from 'react';
+import { Mic, Square, Clock, ChevronDown, ChevronUp, User } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useWorkflow } from '@/context/WorkflowContext';
-<<<<<<< HEAD
-import { mockTranscript, mockClinicalMoments, mockAmbientSegments } from '@/data/mockData';
-import { ClinicalMomentsPanel } from './ClinicalMomentsPanel';
-import { ClinicalMoment } from '@/types/clinical';
-=======
-import { useToast } from '@/hooks/use-toast';
 import { mockTranscript } from '@/data/mockData';
->>>>>>> 0aeffe3 (Add patient link, update patient hub/review UI, and expand mock data)
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-
-const mockLiveSegments = [
-  { time: '0:00', text: 'Good morning Mrs Johnson. How are you feeling today?', speaker: 'Doctor', isClinical: true },
-  { time: '0:05', text: "Morning doctor. I've been doing okay mostly...", speaker: 'Patient', isClinical: true },
-  { time: '0:12', text: "...but I've noticed some tingling in my feet lately, especially at night.", speaker: 'Patient', isClinical: true },
-  { time: '0:20', text: 'I see. Tell me more about this tingling sensation. When did it start?', speaker: 'Doctor', isClinical: true },
-  { time: '0:28', text: "Maybe about two weeks ago. It's like pins and needles...", speaker: 'Patient', isClinical: true },
-];
 
 export function LiveTranscriptionCard() {
-<<<<<<< HEAD
-  const { setCurrentStep, setCurrentTranscript, markStepComplete, isRecording, setIsRecording, isAmbientMode, isMinimalMode, linkedPatientId } = useWorkflow();
-=======
-  const { setCurrentStep, setCurrentTranscript, markStepComplete, isRecording, setIsRecording, selectedPatient } = useWorkflow();
-  const { toast } = useToast();
->>>>>>> 0aeffe3 (Add patient link, update patient hub/review UI, and expand mock data)
-  const [isPaused, setIsPaused] = useState(false);
-  const [currentSegments, setCurrentSegments] = useState<typeof mockLiveSegments>([]);
+  const { isRecording, setIsRecording, setCurrentTranscript, linkedPatientId } = useWorkflow();
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [clinicalMoments, setClinicalMoments] = useState<ClinicalMoment[]>([]);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const [transcriptLines, setTranscriptLines] = useState<string[]>([]);
+  const [showTranscript, setShowTranscript] = useState(true);
 
+  // Timer effect
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (isRecording && !isPaused) {
+    if (isRecording) {
       interval = setInterval(() => {
         setElapsedTime(prev => prev + 1);
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [isRecording, isPaused]);
+  }, [isRecording]);
 
+  // Simulate live transcription with progressive rendering
   useEffect(() => {
-    if (isRecording && !isPaused) {
-      const segmentIndex = Math.min(Math.floor(elapsedTime / 3), mockLiveSegments.length - 1);
-      setCurrentSegments(mockLiveSegments.slice(0, segmentIndex + 1));
+    if (isRecording) {
+      const lines = mockTranscript.rawText.split('\n').filter(line => line.trim());
+      let index = 0;
       
-      // Simulate clinical moments in ambient mode
-      if (isAmbientMode && elapsedTime > 0 && elapsedTime % 8 === 0) {
-        const momentIndex = Math.min(Math.floor(elapsedTime / 8) - 1, mockClinicalMoments.length - 1);
-        if (momentIndex >= 0) {
-          setClinicalMoments(mockClinicalMoments.slice(0, momentIndex + 1));
+      const addLine = () => {
+        if (index < lines.length && isRecording) {
+          setTranscriptLines(prev => [...prev, lines[index]]);
+          index++;
+          setTimeout(addLine, 2000 + Math.random() * 1500);
         }
-      }
+      };
+      
+      const timeout = setTimeout(addLine, 1000);
+      return () => clearTimeout(timeout);
     }
-  }, [elapsedTime, isRecording, isPaused, isAmbientMode]);
+  }, [isRecording]);
 
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [currentSegments]);
+  const handleStartRecording = () => {
+    setIsRecording(true);
+    setElapsedTime(0);
+    setTranscriptLines([]);
+  };
+
+  const handleStopRecording = () => {
+    setIsRecording(false);
+    setCurrentTranscript(mockTranscript);
+  };
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -81,174 +62,135 @@ export function LiveTranscriptionCard() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleStartRecording = () => {
-    if (!selectedPatient) {
-      toast({
-        title: 'Patient Selection Required',
-        description: 'Please select a patient before starting live transcription.',
-        variant: 'destructive',
-      });
-      return;
-    }
-    setIsRecording(true);
-    setIsPaused(false);
-    setElapsedTime(0);
-    setCurrentSegments([]);
-    setClinicalMoments([]);
-  };
-
-  const handlePauseResume = () => {
-    setIsPaused(!isPaused);
-  };
-
-  const handleStopRecording = () => {
-    setIsRecording(false);
-    setIsPaused(false);
-    setCurrentTranscript(mockTranscript);
-    markStepComplete('capture');
-    setCurrentStep('review');
-  };
-
   return (
-    <Card className={cn(
-      "clinical-card h-full group transition-all duration-300",
-      isRecording ? "ring-2 ring-primary/30 shadow-lg" : "hover:shadow-lg"
-    )}>
-      <CardHeader>
-        <div className="flex items-center gap-3">
-          <div className={cn(
-            'w-12 h-12 rounded-xl flex items-center justify-center transition-all',
-            isRecording 
-              ? isAmbientMode 
-                ? 'bg-accent/10 ambient-pulse' 
-                : 'bg-destructive/10 listening-pulse' 
-              : 'bg-gradient-to-br from-accent/20 to-accent/10 group-hover:scale-105'
-          )}>
-            {isAmbientMode && isRecording ? (
-              <Waves className="w-6 h-6 text-accent" />
-            ) : isRecording ? (
-              <Mic className="w-6 h-6 text-destructive" />
-            ) : (
-              <Mic className="w-6 h-6 text-accent" />
-            )}
-          </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <CardTitle className="text-lg">Live Transcription</CardTitle>
-              {isRecording && (
-                <Badge variant={isAmbientMode ? 'ai' : 'destructive'} className="text-xs animate-pulse-gentle gap-1">
-                  <span className="w-1.5 h-1.5 bg-current rounded-full animate-pulse" />
-                  {isPaused ? 'Paused' : isAmbientMode ? 'Ambient' : 'Recording'}
-                </Badge>
-              )}
-              {linkedPatientId && isRecording && (
-                <Badge variant="outline" className="text-xs gap-1">
-                  <Sparkles className="w-3 h-3" />
-                  Linked
-                </Badge>
-              )}
-            </div>
-            <CardDescription>
-              {isRecording 
-                ? `${isAmbientMode ? 'Ambient' : 'Recording'}: ${formatTime(elapsedTime)}` 
-                : 'Record and transcribe in real-time'
-              }
-            </CardDescription>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {!isRecording ? (
-          <div className="flex flex-col items-center py-6 space-y-4">
-            {!selectedPatient && (
-              <div className="w-full flex items-start gap-3 p-3 bg-destructive/5 border border-destructive/20 rounded-lg">
-                <AlertCircle className="w-5 h-5 text-destructive mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-destructive">Patient Selection Required</p>
-                  <p className="text-xs text-destructive/80 mt-1">
-                    Please link a patient using the button in the header before starting transcription.
-                  </p>
-                </div>
-              </div>
-            )}
-            <button
-              onClick={handleStartRecording}
-              disabled={!selectedPatient}
-              className={cn(
-                "w-24 h-24 rounded-full flex items-center justify-center text-primary-foreground shadow-lg hover:shadow-xl transition-all hover:scale-105 focus:outline-none focus:ring-4 focus:ring-primary/30 group",
-                selectedPatient 
-                  ? "bg-gradient-to-br from-primary to-accent cursor-pointer" 
-                  : "bg-muted text-muted-foreground cursor-not-allowed opacity-50"
-              )}
-            >
-              <Mic className="w-10 h-10 group-hover:scale-110 transition-transform" />
-            </button>
-            <div>
-              <p className="text-muted-foreground text-sm">
-                {selectedPatient ? 'Click to start recording' : 'Select patient to start'}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">Hands-free • Auto-saves</p>
-            </div>
-          </div>
-        ) : (
-          <>
-            {/* Live transcript or Clinical Moments based on mode */}
-            {isAmbientMode ? (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-foreground">Clinical Moments</span>
-                  <Badge variant="secondary" className="text-xs">{clinicalMoments.length} detected</Badge>
-                </div>
-                <ClinicalMomentsPanel moments={clinicalMoments} isLive />
-              </div>
-            ) : (
-              <div
-                ref={scrollRef}
-                className="h-48 overflow-y-auto transcript-scroll bg-muted/30 rounded-xl p-4 space-y-3"
-              >
-                {currentSegments.map((segment, index) => (
-                  <div key={index} className="animate-fade-in flex gap-3 text-sm">
-                    <span className="text-muted-foreground font-mono text-xs w-10 flex-shrink-0 pt-0.5">
-                      {segment.time}
-                    </span>
-                    <div className="flex-1">
-                      <span className={cn(
-                        "text-xs font-medium block mb-0.5",
-                        segment.speaker === 'Doctor' ? 'text-primary' : 'text-accent'
-                      )}>
-                        {segment.speaker}
-                      </span>
-                      <p className="text-foreground">{segment.text}</p>
-                    </div>
+    <TooltipProvider>
+      <Card className={cn(
+        "clinical-card transition-all duration-300",
+        isRecording && "ring-2 ring-primary/50 shadow-lg"
+      )}>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "w-10 h-10 rounded-full flex items-center justify-center transition-colors",
+                isRecording 
+                  ? "bg-destructive/10" 
+                  : "bg-primary/10"
+              )}>
+                {isRecording ? (
+                  <div className="relative">
+                    <Mic className="w-5 h-5 text-destructive" />
+                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-destructive rounded-full animate-pulse" />
                   </div>
-                ))}
-                {currentSegments.length === 0 && (
-                  <div className="flex items-center gap-3 text-muted-foreground text-sm py-8 justify-center">
-                    <div className="flex gap-1">
-                      <span className="w-1 h-4 bg-primary/50 rounded-full animate-wave" style={{ animationDelay: '0ms' }} />
-                      <span className="w-1 h-4 bg-primary/50 rounded-full animate-wave" style={{ animationDelay: '150ms' }} />
-                      <span className="w-1 h-4 bg-primary/50 rounded-full animate-wave" style={{ animationDelay: '300ms' }} />
-                    </div>
-                    <span>Listening for speech...</span>
-                  </div>
+                ) : (
+                  <Mic className="w-5 h-5 text-primary" />
                 )}
               </div>
-            )}
-
-            {/* Recording controls */}
-            <div className="flex items-center justify-center gap-3">
-              <Button variant="outline" size="lg" onClick={handlePauseResume} className="gap-2 min-w-[120px]">
-                {isPaused ? <Mic className="w-5 h-5" /> : <Pause className="w-5 h-5" />}
-                {isPaused ? 'Resume' : 'Pause'}
-              </Button>
-              <Button variant="recording" size="lg" onClick={handleStopRecording} className="gap-2 min-w-[160px]">
-                <Square className="w-5 h-5" />
-                Stop & Review →
-              </Button>
+              <div>
+                <CardTitle className="text-lg">Live Transcription</CardTitle>
+                <CardDescription>
+                  {isRecording ? 'Recording in progress...' : 'Record audio in real-time'}
+                </CardDescription>
+              </div>
             </div>
-          </>
-        )}
-      </CardContent>
-    </Card>
+            {isRecording && (
+              <Badge variant="destructive" className="gap-1">
+                <Clock className="w-3 h-3" />
+                {formatTime(elapsedTime)}
+              </Badge>
+            )}
+          </div>
+
+          {/* Patient Linked Indicator */}
+          {linkedPatientId && (
+            <div className="flex items-center gap-2 mt-2 px-3 py-1.5 bg-primary/5 rounded-md">
+              <User className="w-3 h-3 text-primary" />
+              <span className="text-xs text-muted-foreground">Recording linked to patient</span>
+            </div>
+          )}
+        </CardHeader>
+
+        <CardContent className="space-y-4">
+          {/* Controls */}
+          <div className="flex gap-3">
+            {!isRecording ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={handleStartRecording}
+                    variant="clinical"
+                    className="flex-1 gap-2 h-12"
+                  >
+                    <Mic className="w-5 h-5" />
+                    Start Recording
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Begin live audio transcription</p>
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={handleStopRecording}
+                    variant="destructive"
+                    className="flex-1 gap-2 h-12"
+                  >
+                    <Square className="w-4 h-4" />
+                    Stop Recording
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Stop recording and process transcript</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+
+          {/* Live Transcript Preview */}
+          {isRecording && transcriptLines.length > 0 && (
+            <div className="space-y-2 animate-fade-in">
+              <button
+                onClick={() => setShowTranscript(!showTranscript)}
+                className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full"
+              >
+                {showTranscript ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                Live Preview
+                <Badge variant="outline" className="ml-auto text-xs">
+                  {transcriptLines.length} lines
+                </Badge>
+              </button>
+              
+              {showTranscript && (
+                <ScrollArea className="h-[200px] border rounded-lg p-3 bg-muted/30">
+                  <div className="space-y-2 text-sm">
+                    {transcriptLines.map((line, index) => (
+                      <p 
+                        key={index} 
+                        className={cn(
+                          "text-foreground animate-fade-in",
+                          index === transcriptLines.length - 1 && "text-primary font-medium"
+                        )}
+                      >
+                        {line}
+                      </p>
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
+            </div>
+          )}
+
+          {/* Idle State Tips */}
+          {!isRecording && transcriptLines.length === 0 && (
+            <div className="text-center py-4 text-sm text-muted-foreground">
+              <p>Click "Start Recording" to begin live transcription</p>
+              <p className="text-xs mt-1">AI will transcribe speech in real-time</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </TooltipProvider>
   );
 }
