@@ -1,18 +1,18 @@
-import React, { useState } from 'react';
-import { X, FileText, Sparkles } from 'lucide-react';
+import React, { useState } from "react";
+import { X, FileText, Sparkles } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Transcript } from '@/types/clinical';
-import { mockSOAPNote } from '@/data/mockData';
-import { format } from 'date-fns';
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Transcript } from "@/types/clinical";
+import { mockSOAPNote } from "@/data/mockData";
+import { format } from "date-fns";
 
 interface TranscriptionDetailModalProps {
   open: boolean;
@@ -29,12 +29,14 @@ export function TranscriptionDetailModal({
   patientName,
   onOpenInEditor,
 }: TranscriptionDetailModalProps) {
-  const [activeTab, setActiveTab] = useState<'transcript' | 'summary'>('transcript');
+  const [activeTab, setActiveTab] = useState<"transcript" | "summary">(
+    "transcript",
+  );
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   return (
@@ -45,13 +47,18 @@ export function TranscriptionDetailModal({
             <div>
               <DialogTitle className="text-xl">Session Details</DialogTitle>
               <p className="text-sm text-muted-foreground mt-1">
-                {patientName} • {formatDuration(transcript.duration || 0)} • {format(transcript.createdAt, 'MMM d, yyyy')}
+                {patientName} • {formatDuration(transcript.duration || 0)} •{" "}
+                {format(transcript.createdAt, "MMM d, yyyy")}
               </p>
             </div>
           </div>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'transcript' | 'summary')} className="w-full">
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => setActiveTab(v as "transcript" | "summary")}
+          className="w-full"
+        >
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="transcript" className="gap-2">
               <FileText className="w-4 h-4" />
@@ -121,10 +128,13 @@ export function TranscriptionDetailModal({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Close
           </Button>
-          <Button variant="clinical" onClick={() => {
-            onOpenChange(false);
-            onOpenInEditor?.();
-          }}>
+          <Button
+            variant="clinical"
+            onClick={() => {
+              onOpenChange(false);
+              onOpenInEditor?.();
+            }}
+          >
             Open in Editor
           </Button>
         </div>
