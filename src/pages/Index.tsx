@@ -1,6 +1,7 @@
 import React from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useWorkflow } from '@/context/WorkflowContext';
+import { useAuth } from '@/context/AuthContext';
 import { CapturePage } from './CapturePage';
 import { ReviewPage } from './ReviewPage';
 import { SummarizePage } from './SummarizePage';
@@ -10,9 +11,22 @@ import { CorrectionsPage } from './CorrectionsPage';
 import { TranscriptionsPage } from './TranscriptionsPage';
 
 const Index = () => {
-  const { currentStep } = useWorkflow();
+  const { currentStep, setCurrentStep } = useWorkflow();
+  const { userRole } = useAuth();
+
+  // For AI-only users, redirect from patient-hub to capture
+  React.useEffect(() => {
+    if (userRole === 'ai-only' && currentStep === 'patient-hub') {
+      setCurrentStep('capture');
+    }
+  }, [userRole, currentStep, setCurrentStep]);
 
   const renderStep = () => {
+    // AI-only users cannot access patient-hub
+    if (userRole === 'ai-only' && currentStep === 'patient-hub') {
+      return <CapturePage />;
+    }
+
     switch (currentStep) {
       case 'capture':
         return <CapturePage />;
@@ -21,7 +35,8 @@ const Index = () => {
       case 'summarize':
         return <SummarizePage />;
       case 'patient-hub':
-        return <PatientHubPage />;
+        // Only full users can access patient hub
+        return userRole === 'full' ? <PatientHubPage /> : <CapturePage />;
       case 'demographics':
         return <PatientDemographicsPage />;
       case 'corrections':

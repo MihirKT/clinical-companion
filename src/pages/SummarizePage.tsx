@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useWorkflow } from '@/context/WorkflowContext';
+import { useAuth } from '@/context/AuthContext';
 import { PatientLinkButton } from '@/components/capture/PatientLinkButton';
 import { PatientInfoBadge } from '@/components/capture/PatientInfoBadge';
 import { SummaryPatientLink } from '@/components/summarize/SummaryPatientLink';
@@ -42,6 +43,7 @@ const typeLabels: Record<string, string> = {
 
 export function SummarizePage() {
   const { setCurrentStep, markStepComplete, setDocumentStatus, currentTranscript, audioFile, selectedPatient, setSelectedPatient } = useWorkflow();
+  const { userRole } = useAuth();
   const { toast } = useToast();
   const [summaryType, setSummaryType] = useState<SummaryType>('soap');
   const [language, setLanguage] = useState('en');
@@ -50,8 +52,12 @@ export function SummarizePage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedPreviousSummary, setSelectedPreviousSummary] = useState<string | null>(null);
   const [summaryLinkedToPatient, setSummaryLinkedToPatient] = useState(false);
+  const [editPrompt, setEditPrompt] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [generatedTitle, setGeneratedTitle] = useState<string | null>(null);
 
   const hasTranscript = currentTranscript !== null || audioFile !== null;
+  const isAIOnly = userRole === 'ai-only';
 
   const handleGenerate = async () => {
     setIsGenerating(true);
@@ -62,6 +68,13 @@ export function SummarizePage() {
     
     setGeneratedSummary(mockSOAPNote);
     setIsGenerating(false);
+    
+    // For AI-only users, auto-generate a title
+    if (isAIOnly) {
+      const timestamp = format(new Date(), 'MMM d, yyyy • HH:mm');
+      const autoTitle = `${typeLabels[summaryType]} - ${timestamp}`;
+      setGeneratedTitle(autoTitle);
+    }
     
     toast({
       title: 'Summary Generated',
@@ -78,9 +91,48 @@ export function SummarizePage() {
   };
 
   const handleProceed = () => {
-    setDocumentStatus('final');
-    markStepComplete('summarize');
-    setCurrentStep('patient-hub');
+    if (isAIOnly) {
+      // For AI-only users, reset and go back to capture for next summary
+      setGeneratedSummary('');
+      setGeneratedTitle(null);
+      setCurrentStep('capture');
+      toast({
+        title: 'Summary Saved',
+        description: 'Your summary has been saved. Start a new one?',
+      });
+    } else {
+      // For full users, proceed to patient hub
+      setDocumentStatus('final');
+      markStepComplete('summarize');
+      setCurrentStep('patient-hub');
+    }
+  };
+
+  const handleEditRequest = async () => {
+    if (!editPrompt.trim()) {
+      toast({
+        title: 'Please enter an edit request',
+        description: 'Provide instructions for how you want to edit the summary.',
+      });
+      return;
+    }
+
+    setIsEditing(true);
+    
+    // Simulate AI edit processing
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Mock updated summary based on edit prompt
+    setGeneratedSummary(
+      generatedSummary + '\n\n[EDIT APPLIED]: ' + editPrompt
+    );
+    setEditPrompt('');
+    setIsEditing(false);
+    
+    toast({
+      title: 'Summary Edited',
+      description: 'Your summary has been updated based on your request.',
+    });
   };
 
   const handleViewPreviousSummary = (summaryId: string) => {
@@ -250,8 +302,12 @@ export function SummarizePage() {
     <div className="animate-fade-in space-y-6 max-w-5xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-semibold text-foreground">Generate Summary</h2>
-          <p className="text-muted-foreground mt-1">Configure and generate clinical documentation</p>
+          <h2 className="text-2xl font-semibold text-foreground">
+            {isAIOnly ? 'AI Summary Generator' : 'Generate Summary'}
+          </h2>
+          <p className="text-muted-foreground mt-1">
+            {isAIOnly ? 'Create clinical summaries with AI assistance' : 'Configure and generate clinical documentation'}
+          </p>
         </div>
         <PatientLinkButton
           onSelectPatient={setSelectedPatient}
@@ -267,6 +323,11 @@ export function SummarizePage() {
             onRemove={() => setSelectedPatient(null)}
             variant="default"
           />
+          {isAIOnly && (
+            <p className="text-xs text-muted-foreground mt-2">
+              Patient linking is optional - you can proceed without linking a patient
+            </p>
+          )}
         </div>
       )}
 
@@ -320,7 +381,7 @@ export function SummarizePage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="prompt">Refine Summary (Optional)</Label>
+              <Label htmlFor="prompt">Context window</Label>
               <Textarea
                 id="prompt"
                 placeholder="Focus on cardiology findings and keep it concise for referral..."
@@ -444,12 +505,16 @@ export function SummarizePage() {
                     <CardTitle className="text-lg">
                       {selectedPreviousSummary 
                         ? mockPreviousSummaries.find(s => s.id === selectedPreviousSummary)?.title
+                        : isAIOnly && generatedTitle
+                        ? generatedTitle
                         : 'Generated Summary'
                       }
                     </CardTitle>
                     <CardDescription>
                       {selectedPreviousSummary
                         ? `${mockPreviousSummaries.find(s => s.id === selectedPreviousSummary)?.patientName} • ${format(mockPreviousSummaries.find(s => s.id === selectedPreviousSummary)?.createdAt || new Date(), 'MMM d, yyyy')}`
+                        : isAIOnly
+                        ? 'AI-Generated Summary'
                         : summaryTypes.find(t => t.value === summaryType)?.label
                       }
                     </CardDescription>
@@ -479,6 +544,57 @@ export function SummarizePage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Ask AI to Edit */}
+          {!selectedPreviousSummary && (
+            <Card className="clinical-card">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Sparkles className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Ask AI to Edit</CardTitle>
+                    <CardDescription>Request specific changes to your summary</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-prompt">Edit Instructions</Label>
+                  <Textarea
+                    id="edit-prompt"
+                    placeholder="e.g., Add more detail about the patient's cardiac history... or Shorten the assessment section..."
+                    value={editPrompt}
+                    onChange={(e) => setEditPrompt(e.target.value)}
+                    disabled={isEditing}
+                    className="min-h-[100px] resize-none"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Describe the changes you'd like the AI to make to the summary
+                  </p>
+                </div>
+                <Button
+                  onClick={handleEditRequest}
+                  disabled={isEditing || !editPrompt.trim()}
+                  variant="ai"
+                  className="w-full gap-2"
+                >
+                  {isEditing ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Applying Edits...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      Apply Edit
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
 
@@ -491,8 +607,17 @@ export function SummarizePage() {
             size="lg"
             className="gap-2"
           >
-            Proceed to Patient Hub
-            <ArrowRight className="w-4 h-4" />
+            {isAIOnly ? (
+              <>
+                Create Another Summary
+                <ArrowRight className="w-4 h-4" />
+              </>
+            ) : (
+              <>
+                Proceed to Patient Hub
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
           </Button>
         </div>
       )}

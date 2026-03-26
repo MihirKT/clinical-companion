@@ -1,9 +1,12 @@
 import React from 'react';
-import { Check, Upload, FileText, FileEdit, Users, PenTool, ChevronRight } from 'lucide-react';
+import { Check, Upload, FileText, FileEdit, Users, PenTool, ChevronRight, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWorkflow } from '@/context/WorkflowContext';
+import { useAuth } from '@/context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { WorkflowStep } from '@/types/clinical';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Tooltip,
   TooltipContent,
@@ -20,6 +23,13 @@ const steps: { id: WorkflowStep; label: string; icon: React.ElementType; descrip
 
 export function WorkflowStepper() {
   const { currentStep, setCurrentStep, documentStatus, completedSteps } = useWorkflow();
+  const { logout, userName, userRole } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   const getStepStatus = (stepId: WorkflowStep) => {
     if (currentStep === stepId) return 'active';
@@ -68,8 +78,10 @@ export function WorkflowStepper() {
           </div>
 
           {/* Stepper */}
-          <nav className="flex items-center gap-1 lg:gap-2 overflow-x-auto py-1">
-            {steps.map((step, index) => {
+          <nav className="flex items-center gap-1 lg:gap-2 overflow-x-auto py-1 flex-1">{/* Added flex-1 to take up space */}
+            {steps
+              .filter(step => !(userRole === 'ai-only' && step.id === 'patient-hub'))
+              .map((step, index, filteredSteps) => {
               const status = getStepStatus(step.id);
               const Icon = step.icon;
               const clickable = isStepClickable(step);
@@ -114,7 +126,7 @@ export function WorkflowStepper() {
                       {!clickable && <p className="text-warning mt-1">Complete previous steps first</p>}
                     </TooltipContent>
                   </Tooltip>
-                  {index < steps.length - 1 && (
+                  {index < filteredSteps.length - 1 && (
                     <ChevronRight className="w-4 h-4 text-border flex-shrink-0 hidden lg:block" />
                   )}
                 </React.Fragment>
@@ -122,11 +134,28 @@ export function WorkflowStepper() {
             })}
           </nav>
 
-          {/* Status Badge */}
-          <div className="flex-shrink-0">
+          {/* Status Badge and Logout */}
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="hidden md:flex items-center gap-2">
+              <div className="text-xs lg:text-sm">
+                <p className="font-medium text-foreground">{userName}</p>
+                <p className="text-muted-foreground capitalize">
+                  {userRole === 'ai-only' ? 'AI Only' : 'Full Access'}
+                </p>
+              </div>
+            </div>
             <Badge variant={statusVariant[documentStatus]} className="capitalize text-xs lg:text-sm px-2 lg:px-3">
               {statusLabel[documentStatus]}
             </Badge>
+            <Button
+              onClick={handleLogout}
+              variant="ghost"
+              size="sm"
+              className="gap-2 text-muted-foreground hover:text-foreground"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden lg:inline">Logout</span>
+            </Button>
           </div>
         </div>
       </div>
