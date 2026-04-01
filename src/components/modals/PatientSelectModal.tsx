@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Plus, X, AlertCircle, Clock } from 'lucide-react';
+import { Search, Plus, AlertCircle, Clock, ChevronLeft } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Card, CardContent } from '@/components/ui/card';
 import { Patient } from '@/types/clinical';
 import { mockPatients } from '@/data/mockData';
 import { format } from 'date-fns';
@@ -33,6 +34,7 @@ export function PatientSelectModal({
   const [newPatientAge, setNewPatientAge] = useState('');
   const [newPatientGender, setNewPatientGender] = useState<'male' | 'female' | 'other'>('other');
   const [activeTab, setActiveTab] = useState('search');
+  const [selectedPatientForReview, setSelectedPatientForReview] = useState<Patient | null>(null);
 
   // Filter patients based on search query
   const filteredPatients = useMemo(() => {
@@ -54,10 +56,15 @@ export function PatientSelectModal({
     });
   }, [filteredPatients]);
 
-  const handleSelectPatient = (patient: Patient) => {
+  const handleSelectPatientForReview = (patient: Patient) => {
+    setSelectedPatientForReview(patient);
+  };
+
+  const handleConfirmSelection = (patient: Patient) => {
     onSelectPatient(patient);
     onOpenChange(false);
     setSearchQuery('');
+    setSelectedPatientForReview(null);
   };
 
   const handleCreatePatient = () => {
@@ -80,6 +87,121 @@ export function PatientSelectModal({
     setNewPatientGender('other');
     setActiveTab('search');
   };
+
+  // If a patient is selected for review, show their details
+  if (selectedPatientForReview) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-md max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <button
+                onClick={() => setSelectedPatientForReview(null)}
+                className="hover:bg-accent p-1 rounded transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              Patient Summary
+            </DialogTitle>
+          </DialogHeader>
+
+          <ScrollArea className="flex-1">
+            <div className="space-y-4 pr-4">
+              {/* Patient Card */}
+              <Card className="clinical-card">
+                <CardContent className="p-4">
+                  <div className="space-y-3">
+                    <div>
+                      <p className="font-semibold text-lg">{selectedPatientForReview.name}</p>
+                      <p className="text-sm text-muted-foreground">{selectedPatientForReview.medicalId}</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className="text-muted-foreground text-xs">Age</p>
+                        <p className="font-medium">{selectedPatientForReview.age}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground text-xs">Gender</p>
+                        <p className="font-medium capitalize">{selectedPatientForReview.gender}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground text-xs">Condition</p>
+                        <p className="font-medium">{selectedPatientForReview.primaryCondition || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground text-xs">Last Visit</p>
+                        <p className="font-medium">
+                          {selectedPatientForReview.lastVisit
+                            ? format(new Date(selectedPatientForReview.lastVisit), 'MMM d')
+                            : 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* AI Patient Summary */}
+              {selectedPatientForReview.aiSummary && (
+                <Card className="clinical-card">
+                  <CardContent className="p-4">
+                    <div className="space-y-2">
+                      <p className="font-semibold text-sm flex items-center gap-2">
+                        <span className="text-xs font-bold px-2 py-1 bg-primary/10 text-primary rounded">
+                          AI
+                        </span>
+                        Patient Summary
+                      </p>
+                      <p className="text-sm text-foreground leading-relaxed">
+                        {selectedPatientForReview.aiSummary}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Alerts */}
+              {selectedPatientForReview.alerts && selectedPatientForReview.alerts.length > 0 && (
+                <Card className="clinical-card">
+                  <CardContent className="p-4">
+                    <p className="font-semibold text-sm mb-3">Alerts</p>
+                    <div className="space-y-2">
+                      {selectedPatientForReview.alerts.map((alert) => (
+                        <div key={alert.id} className="flex items-start gap-2 p-2 bg-destructive/5 rounded text-sm">
+                          <AlertCircle className="w-4 h-4 text-destructive mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="font-medium capitalize">{alert.type}</p>
+                            <p className="text-xs text-muted-foreground">{alert.message}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </ScrollArea>
+
+          <div className="flex gap-2 pt-4 border-t">
+            <Button
+              variant="outline"
+              onClick={() => setSelectedPatientForReview(null)}
+              className="flex-1"
+            >
+              Back
+            </Button>
+            <Button
+              onClick={() => handleConfirmSelection(selectedPatientForReview)}
+              className="flex-1"
+            >
+              Link Patient
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -121,7 +243,7 @@ export function PatientSelectModal({
                   sortedPatients.map((patient) => (
                     <button
                       key={patient.id}
-                      onClick={() => handleSelectPatient(patient)}
+                      onClick={() => handleSelectPatientForReview(patient)}
                       className="w-full text-left p-3 hover:bg-accent rounded-lg transition-colors group"
                     >
                       <div className="flex items-start justify-between gap-2">

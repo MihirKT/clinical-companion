@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileEdit, RefreshCw, Copy, Download, ArrowRight, Sparkles, Upload, Mic, History, X, Calendar, User } from 'lucide-react';
+import { FileEdit, RefreshCw, Copy, Download, ArrowRight, Sparkles, Upload, Mic, History, X, Calendar, User, Plus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useWorkflow } from '@/context/WorkflowContext';
 import { useAuth } from '@/context/AuthContext';
 import { PatientLinkButton } from '@/components/capture/PatientLinkButton';
@@ -56,8 +57,42 @@ export function SummarizePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [generatedTitle, setGeneratedTitle] = useState<string | null>(null);
 
+  // Multi-document support
+  interface OpenDocument {
+    id: string;
+    title: string;
+    content: string;
+    type: 'generated' | 'previous';
+    createdAt: Date;
+  }
+
+  const [openDocuments, setOpenDocuments] = useState<OpenDocument[]>([]);
+  const [activeDocumentId, setActiveDocumentId] = useState<string | null>(null);
+
   const hasTranscript = currentTranscript !== null || audioFile !== null;
   const isAIOnly = userRole === 'ai-only';
+
+  // Multi-document functions
+  const openNewDocument = (title: string, content: string, type: 'generated' | 'previous' = 'generated') => {
+    const doc: OpenDocument = {
+      id: `doc-${Date.now()}`,
+      title,
+      content,
+      type,
+      createdAt: new Date(),
+    };
+    setOpenDocuments([...openDocuments, doc]);
+    setActiveDocumentId(doc.id);
+  };
+
+  const closeDocument = (docId: string) => {
+    setOpenDocuments(openDocuments.filter(d => d.id !== docId));
+    if (activeDocumentId === docId) {
+      setActiveDocumentId(openDocuments[0]?.id || null);
+    }
+  };
+
+  const getActiveDocument = () => openDocuments.find(d => d.id === activeDocumentId);
 
   const handleGenerate = async () => {
     setIsGenerating(true);
@@ -74,6 +109,12 @@ export function SummarizePage() {
       const timestamp = format(new Date(), 'MMM d, yyyy • HH:mm');
       const autoTitle = `${typeLabels[summaryType]} - ${timestamp}`;
       setGeneratedTitle(autoTitle);
+      // Open as a new document tab
+      openNewDocument(autoTitle, mockSOAPNote, 'generated');
+    } else {
+      // For full users, open as document tab
+      const docTitle = `${typeLabels[summaryType]} - ${format(new Date(), 'MMM d, yyyy')}`;
+      openNewDocument(docTitle, mockSOAPNote, 'generated');
     }
     
     toast({
@@ -140,6 +181,8 @@ export function SummarizePage() {
     if (summary) {
       setSelectedPreviousSummary(summaryId);
       setGeneratedSummary(summary.content);
+      // Also open as a document tab
+      openNewDocument(summary.title, summary.content, 'previous');
     }
   };
 
@@ -461,145 +504,314 @@ export function SummarizePage() {
         </Card>
       </div>
 
-      {/* Generated Summary */}
-      {generatedSummary && (
+      {/* Generated Summary with Multi-Document Support */}
+      {(generatedSummary || openDocuments.length > 0) && (
         <div className="space-y-6 animate-slide-up">
-          {/* Summary Patient Link Component */}
-          {!selectedPreviousSummary && (
-            <SummaryPatientLink
-              linkedPatient={summaryLinkedToPatient ? selectedPatient : null}
-              onLink={() => {
-                if (!selectedPatient) {
-                  toast({
-                    title: 'Please Link a Patient',
-                    description: 'Use the "Link Patient" button in the header first.',
-                    variant: 'destructive',
-                  });
-                } else {
-                  setSummaryLinkedToPatient(true);
-                  toast({
-                    title: 'Summary Linked',
-                    description: `Summary linked to ${selectedPatient.name}`,
-                  });
-                }
-              }}
-              onUnlink={() => {
-                setSummaryLinkedToPatient(false);
-                toast({
-                  title: 'Summary Unlinked',
-                  description: 'Summary removed from patient record',
-                });
-              }}
-              isLinked={summaryLinkedToPatient && !!selectedPatient}
-            />
+          {/* Multi-Document Tabs */}
+          {openDocuments.length > 0 && (
+            <div className="bg-muted/50 rounded-lg p-3 border">
+              <Tabs value={activeDocumentId || ''} onValueChange={setActiveDocumentId} className="w-full">
+                <div className="flex items-center justify-between">
+                  <TabsList className="inline-flex h-auto p-0 bg-transparent">
+                    {openDocuments.map((doc) => (
+                      <TabsTrigger
+                        key={doc.id}
+                        value={doc.id}
+                        className="inline-flex px-3 py-2 rounded-md text-sm font-medium transition-all data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:border"
+                      >
+                        {doc.title}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openNewDocument(`New Summary ${openDocuments.length + 1}`, '')}
+                    className="gap-1"
+                  >
+                    <Plus className="w-3 h-3" />
+                    New
+                  </Button>
+                </div>
+              </Tabs>
+            </div>
           )}
 
-          <Card className="clinical-card">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
-                    <FileEdit className="w-5 h-5 text-success" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg">
-                      {selectedPreviousSummary 
-                        ? mockPreviousSummaries.find(s => s.id === selectedPreviousSummary)?.title
-                        : isAIOnly && generatedTitle
-                        ? generatedTitle
-                        : 'Generated Summary'
+          {/* Document Content */}
+          {openDocuments.length > 0 ? (
+            getActiveDocument() ? (
+              <>
+                {/* Summary Patient Link */}
+                {getActiveDocument()?.type === 'generated' && !selectedPreviousSummary && (
+                  <SummaryPatientLink
+                    linkedPatient={summaryLinkedToPatient ? selectedPatient : null}
+                    onLink={() => {
+                      if (!selectedPatient) {
+                        toast({
+                          title: 'Please Link a Patient',
+                          description: 'Use the "Link Patient" button in the header first.',
+                          variant: 'destructive',
+                        });
+                      } else {
+                        setSummaryLinkedToPatient(true);
+                        toast({
+                          title: 'Summary Linked',
+                          description: `Summary linked to ${selectedPatient.name}`,
+                        });
                       }
-                    </CardTitle>
-                    <CardDescription>
-                      {selectedPreviousSummary
-                        ? `${mockPreviousSummaries.find(s => s.id === selectedPreviousSummary)?.patientName} • ${format(mockPreviousSummaries.find(s => s.id === selectedPreviousSummary)?.createdAt || new Date(), 'MMM d, yyyy')}`
-                        : isAIOnly
-                        ? 'AI-Generated Summary'
-                        : summaryTypes.find(t => t.value === summaryType)?.label
-                      }
-                    </CardDescription>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {!selectedPreviousSummary && (
-                    <Button variant="outline" size="sm" onClick={handleGenerate} disabled={isGenerating}>
-                      <RefreshCw className="w-4 h-4 mr-1" />
-                      Regenerate
-                    </Button>
-                  )}
-                  <Button variant="outline" size="sm" onClick={handleCopy}>
-                    <Copy className="w-4 h-4 mr-1" />
-                    Copy
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Download className="w-4 h-4 mr-1" />
-                    Export
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-muted/30 rounded-lg p-6 font-mono text-sm whitespace-pre-wrap leading-relaxed text-foreground max-h-[500px] overflow-y-auto transcript-scroll">
-                {generatedSummary}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Ask AI to Edit */}
-          {!selectedPreviousSummary && (
-            <Card className="clinical-card">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Sparkles className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg">Ask AI to Edit</CardTitle>
-                    <CardDescription>Request specific changes to your summary</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-prompt">Edit Instructions</Label>
-                  <Textarea
-                    id="edit-prompt"
-                    placeholder="e.g., Add more detail about the patient's cardiac history... or Shorten the assessment section..."
-                    value={editPrompt}
-                    onChange={(e) => setEditPrompt(e.target.value)}
-                    disabled={isEditing}
-                    className="min-h-[100px] resize-none"
+                    }}
+                    onUnlink={() => {
+                      setSummaryLinkedToPatient(false);
+                      toast({
+                        title: 'Summary Unlinked',
+                        description: 'Summary removed from patient record',
+                      });
+                    }}
+                    isLinked={summaryLinkedToPatient && !!selectedPatient}
                   />
-                  <p className="text-xs text-muted-foreground">
-                    Describe the changes you'd like the AI to make to the summary
-                  </p>
-                </div>
-                <Button
-                  onClick={handleEditRequest}
-                  disabled={isEditing || !editPrompt.trim()}
-                  variant="ai"
-                  className="w-full gap-2"
-                >
-                  {isEditing ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                      Applying Edits...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-4 h-4" />
-                      Apply Edit
-                    </>
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
+                )}
+
+                {/* Document Display */}
+                <Card className="clinical-card">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
+                          <FileEdit className="w-5 h-5 text-success" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg">{getActiveDocument()?.title}</CardTitle>
+                          <CardDescription>
+                            {format(getActiveDocument()?.createdAt || new Date(), 'MMM d, yyyy HH:mm')}
+                          </CardDescription>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {getActiveDocument()?.type === 'generated' && (
+                          <Button variant="outline" size="sm" onClick={handleGenerate} disabled={isGenerating}>
+                            <RefreshCw className="w-4 h-4 mr-1" />
+                            Regenerate
+                          </Button>
+                        )}
+                        <Button variant="outline" size="sm" onClick={handleCopy}>
+                          <Copy className="w-4 h-4 mr-1" />
+                          Copy
+                        </Button>
+                        <Button variant="outline" size="sm">
+                          <Download className="w-4 h-4 mr-1" />
+                          Export
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => closeDocument(activeDocumentId || '')}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="bg-muted/30 rounded-lg p-6 font-mono text-sm whitespace-pre-wrap leading-relaxed text-foreground max-h-[500px] overflow-y-auto transcript-scroll">
+                      {getActiveDocument()?.content || generatedSummary}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Edit Request - only for generated docs */}
+                {getActiveDocument()?.type === 'generated' && !selectedPreviousSummary && (
+                  <Card className="clinical-card">
+                    <CardHeader>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <Sparkles className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg">Ask AI to Edit</CardTitle>
+                          <CardDescription>Request specific changes to your summary</CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="edit-prompt">Edit Instructions</Label>
+                        <Textarea
+                          id="edit-prompt"
+                          placeholder="e.g., Add more detail about the patient's cardiac history... or Shorten the assessment section..."
+                          value={editPrompt}
+                          onChange={(e) => setEditPrompt(e.target.value)}
+                          disabled={isEditing}
+                          className="min-h-[100px] resize-none"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Describe the changes you'd like the AI to make to the summary
+                        </p>
+                      </div>
+                      <Button
+                        onClick={handleEditRequest}
+                        disabled={isEditing || !editPrompt.trim()}
+                        variant="ai"
+                        className="w-full gap-2"
+                      >
+                        {isEditing ? (
+                          <>
+                            <RefreshCw className="w-4 h-4 animate-spin" />
+                            Applying Edits...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4" />
+                            Apply Edit
+                          </>
+                        )}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
+            ) : null
+          ) : (
+            // Original view when generatedSummary exists but no open documents yet
+            <>
+              {/* Summary Patient Link Component */}
+              {!selectedPreviousSummary && (
+                <SummaryPatientLink
+                  linkedPatient={summaryLinkedToPatient ? selectedPatient : null}
+                  onLink={() => {
+                    if (!selectedPatient) {
+                      toast({
+                        title: 'Please Link a Patient',
+                        description: 'Use the "Link Patient" button in the header first.',
+                        variant: 'destructive',
+                      });
+                    } else {
+                      setSummaryLinkedToPatient(true);
+                      toast({
+                        title: 'Summary Linked',
+                        description: `Summary linked to ${selectedPatient.name}`,
+                      });
+                    }
+                  }}
+                  onUnlink={() => {
+                    setSummaryLinkedToPatient(false);
+                    toast({
+                      title: 'Summary Unlinked',
+                      description: 'Summary removed from patient record',
+                    });
+                  }}
+                  isLinked={summaryLinkedToPatient && !!selectedPatient}
+                />
+              )}
+
+              <Card className="clinical-card">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
+                        <FileEdit className="w-5 h-5 text-success" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg">
+                          {selectedPreviousSummary 
+                            ? mockPreviousSummaries.find(s => s.id === selectedPreviousSummary)?.title
+                            : isAIOnly && generatedTitle
+                            ? generatedTitle
+                            : 'Generated Summary'
+                          }
+                        </CardTitle>
+                        <CardDescription>
+                          {selectedPreviousSummary
+                            ? `${mockPreviousSummaries.find(s => s.id === selectedPreviousSummary)?.patientName} • ${format(mockPreviousSummaries.find(s => s.id === selectedPreviousSummary)?.createdAt || new Date(), 'MMM d, yyyy')}`
+                            : isAIOnly
+                            ? 'AI-Generated Summary'
+                            : summaryTypes.find(t => t.value === summaryType)?.label
+                          }
+                        </CardDescription>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {!selectedPreviousSummary && (
+                        <Button variant="outline" size="sm" onClick={handleGenerate} disabled={isGenerating}>
+                          <RefreshCw className="w-4 h-4 mr-1" />
+                          Regenerate
+                        </Button>
+                      )}
+                      <Button variant="outline" size="sm" onClick={handleCopy}>
+                        <Copy className="w-4 h-4 mr-1" />
+                        Copy
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        <Download className="w-4 h-4 mr-1" />
+                        Export
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-muted/30 rounded-lg p-6 font-mono text-sm whitespace-pre-wrap leading-relaxed text-foreground max-h-[500px] overflow-y-auto transcript-scroll">
+                    {generatedSummary}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Ask AI to Edit */}
+              {!selectedPreviousSummary && (
+                <Card className="clinical-card">
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Sparkles className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg">Ask AI to Edit</CardTitle>
+                        <CardDescription>Request specific changes to your summary</CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-prompt">Edit Instructions</Label>
+                      <Textarea
+                        id="edit-prompt"
+                        placeholder="e.g., Add more detail about the patient's cardiac history... or Shorten the assessment section..."
+                        value={editPrompt}
+                        onChange={(e) => setEditPrompt(e.target.value)}
+                        disabled={isEditing}
+                        className="min-h-[100px] resize-none"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Describe the changes you'd like the AI to make to the summary
+                      </p>
+                    </div>
+                    <Button
+                      onClick={handleEditRequest}
+                      disabled={isEditing || !editPrompt.trim()}
+                      variant="ai"
+                      className="w-full gap-2"
+                    >
+                      {isEditing ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 animate-spin" />
+                          Applying Edits...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4" />
+                          Apply Edit
+                        </>
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+            </>
           )}
         </div>
       )}
 
       {/* Footer */}
-      {generatedSummary && !selectedPreviousSummary && (
+      {(generatedSummary || openDocuments.length > 0) && !selectedPreviousSummary && (
         <div className="flex justify-end">
           <Button
             onClick={handleProceed}
