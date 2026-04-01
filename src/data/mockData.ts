@@ -17,6 +17,7 @@ import {
   RecentTranscription,
   VisitType,
   TranscriptSegment,
+  Appointment,
 } from '@/types/clinical';
 
 // Mock Patients
@@ -35,6 +36,13 @@ export const mockPatients: Patient[] = [
       { id: 'a1', type: 'allergy', message: 'Penicillin allergy', severity: 'high' },
       { id: 'a2', type: 'medication', message: 'On Metformin 1000mg BID', severity: 'low' },
     ],
+    upcomingAppointments: [
+      { id: 'apt1', patientId: 'p1', dateTime: new Date('2026-04-01 14:30'), type: 'follow-up', reason: 'Diabetes follow-up', location: 'Room 101, Clinic A' },
+      { id: 'apt2', patientId: 'p1', dateTime: new Date('2026-04-15 10:00'), type: 'check-up', reason: 'Routine check-up', location: 'Room 204, Clinic B' },
+      { id: 'apt1b', patientId: 'p1', dateTime: new Date('2026-04-22 09:00'), type: 'lab-review', reason: 'Lab results review - HbA1c and B12', location: 'Room 101, Clinic A' },
+      { id: 'apt1c', patientId: 'p1', dateTime: new Date('2026-05-06 15:15'), type: 'specialist', reason: 'Diabetic foot clinic referral', location: 'Room 305, Specialty Clinic' },
+      { id: 'apt1d', patientId: 'p1', dateTime: new Date('2026-05-20 11:30'), type: 'follow-up', reason: 'Neuropathy symptom assessment', location: 'Room 101, Clinic A' },
+    ],
   },
   {
     id: 'p2',
@@ -49,6 +57,12 @@ export const mockPatients: Patient[] = [
     alerts: [
       { id: 'a3', type: 'risk', message: 'High cardiovascular risk', severity: 'high' },
     ],
+    upcomingAppointments: [
+      { id: 'apt3', patientId: 'p2', dateTime: new Date('2026-04-05 11:00'), type: 'follow-up', reason: 'Cardiology review', location: 'Room 301, Clinic A' },
+      { id: 'apt3b', patientId: 'p2', dateTime: new Date('2026-04-18 14:00'), type: 'diagnostic', reason: 'Stress test', location: 'Cardiology Lab, Clinic A' },
+      { id: 'apt3c', patientId: 'p2', dateTime: new Date('2026-05-02 10:30'), type: 'follow-up', reason: 'Post-stress test review', location: 'Room 301, Clinic A' },
+      { id: 'apt3d', patientId: 'p2', dateTime: new Date('2026-05-16 13:45'), type: 'check-up', reason: 'Blood pressure and medication review', location: 'Room 301, Clinic A' },
+    ],
   },
   {
     id: 'p3',
@@ -59,6 +73,13 @@ export const mockPatients: Patient[] = [
     primaryCondition: 'Anxiety Disorder',
     lastVisit: new Date('2024-01-18'),
     aiSummary: 'Managing generalized anxiety with CBT and low-dose SSRI. Good therapeutic response.',
+    upcomingAppointments: [
+      { id: 'apt4', patientId: 'p3', dateTime: new Date('2026-04-02 09:30'), type: 'consultation', reason: 'Mental health evaluation', location: 'Room 105, Clinic C' },
+      { id: 'apt4b', patientId: 'p3', dateTime: new Date('2026-04-09 14:00'), type: 'therapy', reason: 'Psychotherapy session', location: 'Room 105, Clinic C' },
+      { id: 'apt4c', patientId: 'p3', dateTime: new Date('2026-04-23 09:30'), type: 'medication-review', reason: 'Medication effectiveness review', location: 'Room 105, Clinic C' },
+      { id: 'apt4d', patientId: 'p3', dateTime: new Date('2026-05-07 14:00'), type: 'therapy', reason: 'Psychotherapy session', location: 'Room 105, Clinic C' },
+      { id: 'apt4e', patientId: 'p3', dateTime: new Date('2026-05-21 10:00'), type: 'follow-up', reason: 'Progress assessment', location: 'Room 105, Clinic C' },
+    ],
   },
   {
     id: 'p4',
@@ -73,6 +94,12 @@ export const mockPatients: Patient[] = [
       { id: 'a4', type: 'condition', message: 'Fall risk - use caution', severity: 'medium' },
       { id: 'a5', type: 'medication', message: 'Multiple drug interactions possible', severity: 'medium' },
     ],
+    upcomingAppointments: [
+      { id: 'apt5', patientId: 'p4', dateTime: new Date('2026-04-08 13:00'), type: 'check-up', reason: 'COPD management', location: 'Room 202, Clinic A' },
+      { id: 'apt5b', patientId: 'p4', dateTime: new Date('2026-04-19 10:30'), type: 'specialist', reason: 'Pulmonology follow-up', location: 'Room 501, Pulmonary Clinic' },
+      { id: 'apt5c', patientId: 'p4', dateTime: new Date('2026-05-03 14:00'), type: 'test', reason: 'Spirometry and oxygen saturation test', location: 'Pulmonary Lab, Clinic A' },
+      { id: 'apt5d', patientId: 'p4', dateTime: new Date('2026-05-17 11:00'), type: 'follow-up', reason: 'Heart failure monitoring', location: 'Room 202, Clinic A' },
+    ],
   },
   {
     id: 'p5',
@@ -83,6 +110,12 @@ export const mockPatients: Patient[] = [
     primaryCondition: 'Migraine',
     lastVisit: new Date('2024-01-20'),
     aiSummary: 'Chronic migraine patient, exploring preventive options after triptans showed limited efficacy.',
+    upcomingAppointments: [
+      { id: 'apt6', patientId: 'p5', dateTime: new Date('2026-04-10 15:00'), type: 'follow-up', reason: 'Migraine management review', location: 'Room 107, Clinic B' },
+      { id: 'apt6b', patientId: 'p5', dateTime: new Date('2026-04-24 10:00'), type: 'medication-review', reason: 'Propranolol effectiveness evaluation', location: 'Room 107, Clinic B' },
+      { id: 'apt6c', patientId: 'p5', dateTime: new Date('2026-05-08 15:30'), type: 'follow-up', reason: 'Migraine frequency tracking', location: 'Room 107, Clinic B' },
+      { id: 'apt6d', patientId: 'p5', dateTime: new Date('2026-05-22 14:00'), type: 'specialist', reason: 'Neurology consultation if needed', location: 'Room 601, Neurology Clinic' },
+    ],
   },
   {
     id: 'p6',
@@ -93,6 +126,13 @@ export const mockPatients: Patient[] = [
     primaryCondition: 'Osteoarthritis',
     lastVisit: new Date('2024-01-08'),
     aiSummary: 'Bilateral knee OA with moderate pain. Considering referral to orthopedics for evaluation.',
+    upcomingAppointments: [
+      { id: 'apt7', patientId: 'p6', dateTime: new Date('2026-04-12 10:30'), type: 'consultation', reason: 'Orthopedic consultation', location: 'Room 401, Clinic D' },
+      { id: 'apt7b', patientId: 'p6', dateTime: new Date('2026-04-26 14:30'), type: 'diagnostic', reason: 'Knee imaging - MRI scan', location: 'Imaging Center, Clinic D' },
+      { id: 'apt7c', patientId: 'p6', dateTime: new Date('2026-05-10 11:00'), type: 'follow-up', reason: 'MRI results review with orthopedic surgeon', location: 'Room 401, Clinic D' },
+      { id: 'apt7d', patientId: 'p6', dateTime: new Date('2026-05-24 09:00'), type: 'pre-op', reason: 'Pre-operative assessment for possible surgery', location: 'Room 401, Clinic D' },
+      { id: 'apt7e', patientId: 'p6', dateTime: new Date('2026-06-07 08:00'), type: 'surgery', reason: 'Knee replacement surgery (if approved)', location: 'Operating Room, Clinic D' },
+    ],
   },
 ];
 

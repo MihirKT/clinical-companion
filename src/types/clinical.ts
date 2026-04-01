@@ -16,6 +16,16 @@ export type VisitType = 'new-patient' | 'follow-up' | 'post-op' | 'mental-health
 
 export type AudioQuality = 'excellent' | 'good' | 'fair' | 'poor';
 
+export interface Appointment {
+  id: string;
+  patientId: string;
+  dateTime: Date;
+  type: 'consultation' | 'follow-up' | 'check-up' | 'procedure';
+  reason?: string;
+  location?: string;
+  notes?: string;
+}
+
 export interface Patient {
   id: string;
   name: string;
@@ -30,6 +40,7 @@ export interface Patient {
   alerts?: PatientAlert[];
   allergies?: string;
   currentMedications?: string;
+  upcomingAppointments?: Appointment[];
   vitals?: {
     bloodPressure?: string;
     heartRate?: number;
