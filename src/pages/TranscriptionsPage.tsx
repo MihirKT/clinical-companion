@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Clock, User, ArrowLeft, Search, FileText, Sparkles, ChevronDown, ChevronUp, Copy, Download } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';er
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';

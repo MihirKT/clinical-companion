@@ -8,7 +8,7 @@ export type SummaryType = 'soap' | 'discharge' | 'referral' | 'progress' | 'cust
 
 export type ConfidenceLevel = 'low' | 'medium' | 'high';
 
-export type SeverityLevel = 'low' | 'medium' | 'high';
+export type SeverityLevel = 'low' | 'medium' | 'high' | 'critical';
 
 export type SpeakerRole = 'clinician' | 'patient' | 'caregiver' | 'unknown';
 
@@ -125,11 +125,30 @@ export interface DifferentialDiagnosis {
   explanation?: string;
 }
 
+// New API response format for differential diagnosis
+export interface APIDifferentialDiagnosis {
+  diagnosis: string;
+  likelihood: string;
+  supporting_evidence: string[];
+  contradicting_evidence: string[];
+  why: string;
+  recommended_next_steps: string[];
+}
+
+// Full API response for differential diagnosis review
+export interface APIDifferentialDiagnosisResponse {
+  chief_complaint: string;
+  symptoms: string[];
+  differential_diagnoses: APIDifferentialDiagnosis[];
+  status: string;
+}
+
 export interface SafetyAlert {
   id: string;
-  type: 'drug-interaction' | 'allergy' | 'risk' | 'contraindication';
+  type: string;
   title: string;
   description: string;
+  recommendation?: string;
   severity: SeverityLevel;
   linkedSegmentIds?: string[];
 }

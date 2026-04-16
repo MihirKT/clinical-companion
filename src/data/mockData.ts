@@ -306,6 +306,7 @@ export const mockSafetyAlerts: SafetyAlert[] = [
     title: 'B12 Monitoring Required',
     description: 'Long-term Metformin use may cause B12 deficiency. Consider annual B12 level monitoring.',
     severity: 'medium',
+    recommendation: 'Order serum B12 level and methylmalonic acid level. Consider B12 supplementation if deficient.',
     linkedSegmentIds: ['s7', 's8'],
   },
   {
@@ -314,7 +315,17 @@ export const mockSafetyAlerts: SafetyAlert[] = [
     title: 'Foot Care Assessment Needed',
     description: 'Neuropathy symptoms increase risk of foot ulcers and infections in diabetic patients.',
     severity: 'high',
+    recommendation: 'Perform comprehensive foot examination including monofilament testing. Refer to diabetic foot clinic.',
     linkedSegmentIds: ['s2', 's4'],
+  },
+  {
+    id: 'sa3',
+    type: 'respiratory',
+    title: 'Hypoxemia Alert',
+    description: "Patient's SpO2 is 92% on room air, indicating potential hypoxemia.",
+    severity: 'high',
+    recommendation: 'Administer supplemental oxygen and monitor respiratory status closely.',
+    linkedSegmentIds: [],
   },
 ];
 
@@ -807,3 +818,64 @@ export const mockSuppressedInsights: ClinicalInsight[] = [
     linkedSegmentIds: [],
   },
 ];
+
+// Mock API Response for Differential Diagnosis
+export const mockApiDifferentialDiagnosisResponse = {
+  chief_complaint: 'Bilateral foot tingling and numbness for 2 weeks',
+  differential_diagnoses: [
+    {
+      diagnosis: 'Diabetic Peripheral Neuropathy',
+      likelihood: 'high',
+      why: 'Classic presentation in long-standing T2DM patient with bilateral symmetric sensory symptoms',
+      supporting_evidence: [
+        'Patient reports bilateral distal sensory symptoms (tingling, numbness) with nighttime predominance',
+        'Long-standing Type 2 Diabetes Mellitus history',
+        'Symptoms began approximately 2 weeks ago',
+        'No history of trauma or other contributing factors mentioned'
+      ],
+      contradicting_evidence: [],
+      recommended_next_steps: [
+        'Order HbA1c to assess glycemic control',
+        'Perform comprehensive foot examination including monofilament testing',
+        'Consider nerve conduction studies if symptoms persist',
+        'Diabetes foot care education and referral to diabetic foot clinic'
+      ]
+    },
+    {
+      diagnosis: 'Peripheral Vascular Disease',
+      likelihood: 'medium',
+      why: 'Cold sensation combined with diabetes history suggests possible vascular component',
+      supporting_evidence: [
+        'Subjective cold sensation in bilateral feet',
+        'Type 2 Diabetes Mellitus as major cardiovascular risk factor',
+        'No mention of claudication or other vascular symptoms'
+      ],
+      contradicting_evidence: [
+        'No history of smoking or other traditional vascular risk factors mentioned'
+      ],
+      recommended_next_steps: [
+        'Order ankle-brachial index (ABI) testing',
+        'Consider vascular consultation if ABI abnormal',
+        'Optimize cardiovascular risk factor management'
+      ]
+    },
+    {
+      diagnosis: 'B12 Deficiency Neuropathy',
+      likelihood: 'low',
+      why: 'Metformin use associated with decreased B12 absorption; should be excluded as contributing factor',
+      supporting_evidence: [
+        'Long-term Metformin use (associated with B12 deficiency)',
+        'Patient confirms medication compliance',
+        'Neuropathic symptoms consistent with B12 deficiency presentation'
+      ],
+      contradicting_evidence: [
+        'No other signs of B12 deficiency (no macrocytic anemia, no glossitis)'
+      ],
+      recommended_next_steps: [
+        'Order serum B12 level and methylmalonic acid level',
+        'Consider B12 supplementation if deficient',
+        'Monitor for improvement in symptoms with treatment'
+      ]
+    }
+  ]
+};

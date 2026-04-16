@@ -8,10 +8,11 @@ import { cn } from '@/lib/utils';
 import {
   mockInsights,
   mockDifferentialDiagnosis,
+  mockApiDifferentialDiagnosisResponse,
   mockSafetyAlerts,
   mockClinicalTasks,
 } from '@/data/mockData';
-import { ConfidenceLevel, SeverityLevel } from '@/types/clinical';
+import { ConfidenceLevel, SeverityLevel, APIDifferentialDiagnosis, APIDifferentialDiagnosisResponse } from '@/types/clinical';
 
 const confidenceVariant: Record<ConfidenceLevel, 'confidence-high' | 'confidence-medium' | 'confidence-low'> = {
   high: 'confidence-high',
@@ -20,9 +21,27 @@ const confidenceVariant: Record<ConfidenceLevel, 'confidence-high' | 'confidence
 };
 
 const severityVariant: Record<SeverityLevel, 'severity-high' | 'severity-medium' | 'severity-low'> = {
+  critical: 'severity-high',
   high: 'severity-high',
   medium: 'severity-medium',
   low: 'severity-low',
+};
+
+const getTaskType = (taskText: string) => {
+  const normalized = taskText.toLowerCase();
+  if (normalized.includes('order') || normalized.includes('test') || normalized.includes('lab') || normalized.includes('study')) {
+    return { label: 'Order', className: 'bg-sky-100 text-sky-800' };
+  }
+  if (normalized.includes('follow-up') || normalized.includes('follow up') || normalized.includes('schedule') || normalized.includes('review')) {
+    return { label: 'Follow-up', className: 'bg-emerald-100 text-emerald-800' };
+  }
+  if (normalized.includes('refer') || normalized.includes('referral') || normalized.includes('clinic')) {
+    return { label: 'Referral', className: 'bg-violet-100 text-violet-800' };
+  }
+  if (normalized.includes('check') || normalized.includes('exam')) {
+    return { label: 'Assessment', className: 'bg-orange-100 text-orange-800' };
+  }
+  return { label: 'Task', className: 'bg-muted/70 text-muted-foreground' };
 };
 
 export function ClinicalInsightsPanel() {
@@ -81,30 +100,31 @@ export function ClinicalInsightsPanel() {
             <Badge variant={confidenceVariant['medium']}>Medium Confidence</Badge>
           </div>
         </CardHeader>
-        <CardContent className="space-y-2">
-          {mockDifferentialDiagnosis.map((diagnosis) => (
+        <CardContent className="space-y-3">
+          {mockApiDifferentialDiagnosisResponse.differential_diagnoses.map((diagnosis, index) => (
             <Collapsible
-              key={diagnosis.id}
-              open={expandedDiagnosis === diagnosis.id}
+              key={`diagnosis-${index}`}
+              open={expandedDiagnosis === `diagnosis-${index}`}
               onOpenChange={() => setExpandedDiagnosis(
-                expandedDiagnosis === diagnosis.id ? null : diagnosis.id
+                expandedDiagnosis === `diagnosis-${index}` ? null : `diagnosis-${index}`
               )}
             >
               <CollapsibleTrigger className="w-full">
-                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
+                <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors border border-border">
                   <div className="flex items-center gap-3">
-                    <span className="font-medium text-sm text-foreground">{diagnosis.condition}</span>
+                    <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />
+                    <span className="font-medium text-sm text-foreground">{diagnosis.diagnosis}</span>
                     <Badge
                       variant={
-                        diagnosis.likelihood === 'likely' ? 'confidence-high' :
-                        diagnosis.likelihood === 'probable' ? 'confidence-medium' : 'confidence-low'
+                        diagnosis.likelihood === 'high' ? 'confidence-high' :
+                        diagnosis.likelihood === 'medium' ? 'confidence-medium' : 'confidence-low'
                       }
                       className="capitalize text-xs"
                     >
-                      {diagnosis.likelihood}
+                      {diagnosis.likelihood} likelihood
                     </Badge>
                   </div>
-                  {expandedDiagnosis === diagnosis.id ? (
+                  {expandedDiagnosis === `diagnosis-${index}` ? (
                     <ChevronUp className="w-4 h-4 text-muted-foreground" />
                   ) : (
                     <ChevronDown className="w-4 h-4 text-muted-foreground" />
@@ -112,8 +132,69 @@ export function ClinicalInsightsPanel() {
                 </div>
               </CollapsibleTrigger>
               <CollapsibleContent>
-                <div className="p-3 text-sm text-muted-foreground bg-muted/30 rounded-b-lg -mt-1 border-t border-border">
-                  {diagnosis.reasoning}
+                <div className="mt-2 p-4 bg-muted/30 rounded-lg border border-border space-y-4">
+                  {/* Why this diagnosis */}
+                  <div>
+                    <h4 className="font-semibold text-sm text-foreground mb-2 flex items-center gap-2">
+                      <Brain className="w-4 h-4" />
+                      Clinical Reasoning
+                    </h4>
+                    <p className="text-sm text-muted-foreground">{diagnosis.why}</p>
+                  </div>
+
+                  {/* Supporting Evidence */}
+                  {diagnosis.supporting_evidence.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-foreground mb-2 flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                        Supporting Evidence
+                      </h4>
+                      <ul className="space-y-1">
+                        {diagnosis.supporting_evidence.map((evidence, idx) => (
+                          <li key={idx} className="flex items-start gap-2 text-sm text-muted-foreground">
+                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 mt-2 flex-shrink-0" />
+                            {evidence}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Contradicting Evidence */}
+                  {diagnosis.contradicting_evidence.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-foreground mb-2 flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 text-orange-600" />
+                        Contradicting Evidence
+                      </h4>
+                      <ul className="space-y-1">
+                        {diagnosis.contradicting_evidence.map((evidence, idx) => (
+                          <li key={idx} className="flex items-start gap-2 text-sm text-muted-foreground">
+                            <div className="w-1.5 h-1.5 rounded-full bg-orange-500 mt-2 flex-shrink-0" />
+                            {evidence}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Recommended Next Steps */}
+                  {diagnosis.recommended_next_steps.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-foreground mb-2 flex items-center gap-2">
+                        <ListTodo className="w-4 h-4 text-blue-600" />
+                        Recommended Next Steps
+                      </h4>
+                      <ul className="space-y-1">
+                        {diagnosis.recommended_next_steps.map((step, idx) => (
+                          <li key={idx} className="flex items-start gap-2 text-sm text-muted-foreground">
+                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0" />
+                            {step}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               </CollapsibleContent>
             </Collapsible>
@@ -139,18 +220,43 @@ export function ClinicalInsightsPanel() {
             <div
               key={alert.id}
               className={cn(
-                'p-3 rounded-lg border',
+                'p-3 rounded-lg border group cursor-pointer transition-all duration-200 hover:shadow-md',
                 severityVariant[alert.severity]
               )}
             >
-              <div className="flex items-start gap-2">
-                <AlertTriangle className={cn(
-                  'w-4 h-4 mt-0.5 flex-shrink-0',
-                  alert.severity === 'high' ? 'text-destructive' : 'text-warning'
-                )} />
-                <div>
-                  <p className="font-medium text-sm">{alert.title}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{alert.description}</p>
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className={cn(
+                      'w-4 h-4 flex-shrink-0',
+                      alert.severity === 'critical' ? 'text-destructive' : alert.severity === 'high' ? 'text-destructive' : 'text-warning'
+                    )} />
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-sm">{alert.title}</p>
+                      <Badge
+                        variant="outline"
+                        className="capitalize text-xs px-2 py-1 text-muted-foreground border-muted-foreground/30"
+                      >
+                        {alert.type}
+                      </Badge>
+                      <Badge
+                        variant={
+                          alert.severity === 'critical' ? 'severity-high' :
+                          alert.severity === 'high' ? 'severity-high' :
+                          alert.severity === 'medium' ? 'severity-medium' : 'severity-low'
+                        }
+                        className="capitalize text-xs px-2 py-1"
+                      >
+                        {alert.severity}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <p className="text-sm text-foreground">{alert.description}</p>
+                  {alert.recommendation && (
+                    <p className="text-sm italic text-muted-foreground mt-2">{alert.recommendation}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -187,20 +293,30 @@ export function ClinicalInsightsPanel() {
                 onCheckedChange={() => toggleTask(task.id)}
               />
               <span className={cn(
-                'text-sm flex-1',
-                task.completed && 'line-through text-muted-foreground'
-              )}>
+                  'text-sm flex-1 min-w-0 truncate',
+                  task.completed && 'line-through text-muted-foreground'
+                )}>
                 {task.task}
               </span>
-              <Badge
-                variant={
-                  task.priority === 'high' || task.priority === 'urgent' ? 'severity-high' :
-                  task.priority === 'medium' ? 'severity-medium' : 'severity-low'
-                }
-                className="capitalize text-xs"
-              >
-                {task.priority}
-              </Badge>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {(() => {
+                  const typeInfo = getTaskType(task.task);
+                  return (
+                    <Badge className={cn('uppercase text-[10px] px-2 py-1 border-none', typeInfo.className)}>
+                      {typeInfo.label}
+                    </Badge>
+                  );
+                })()}
+                <Badge
+                  variant={
+                    task.priority === 'high' || task.priority === 'urgent' ? 'severity-high' :
+                    task.priority === 'medium' ? 'severity-medium' : 'severity-low'
+                  }
+                  className="capitalize text-xs px-2 py-1"
+                >
+                  {task.priority}
+                </Badge>
+              </div>
             </label>
           ))}
         </CardContent>
