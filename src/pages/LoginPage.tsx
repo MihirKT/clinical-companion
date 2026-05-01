@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogIn, Sparkles, Zap } from 'lucide-react';
+import { LogIn, Sparkles, Zap, FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -76,14 +76,18 @@ export function LoginPage() {
               <div className="space-y-4">
                 <Label className="text-base font-semibold">Select Your Access Level</Label>
                 <Tabs value={selectedRole} onValueChange={(v) => setSelectedRole(v as UserRole)}>
-                  <TabsList className="grid w-full grid-cols-2 h-auto p-1 bg-muted">
-                    <TabsTrigger value="full" className="py-3 text-base">
+                  <TabsList className="grid w-full grid-cols-3 h-auto p-1 bg-muted">
+                    <TabsTrigger value="full" className="py-3 text-sm">
                       <Zap className="w-4 h-4 mr-2" />
                       Full Access
                     </TabsTrigger>
-                    <TabsTrigger value="ai-only" className="py-3 text-base">
+                    <TabsTrigger value="ai-only" className="py-3 text-sm">
                       <Sparkles className="w-4 h-4 mr-2" />
                       AI Only
+                    </TabsTrigger>
+                    <TabsTrigger value="simple" className="py-3 text-sm">
+                      <FileText className="w-4 h-4 mr-2" />
+                      Simple
                     </TabsTrigger>
                   </TabsList>
 
@@ -155,6 +159,46 @@ export function LoginPage() {
                       <div className="mt-4 p-3 bg-warning/10 border border-warning/20 rounded text-sm text-muted-foreground">
                         <p className="font-medium mb-1">Note:</p>
                         <p>Patient Hub and full workflow features are not available in AI Only mode. Patient linking is optional.</p>
+                      </div>
+                    </div>
+                  </TabsContent>
+
+                  {/* Simple Mode */}
+                  <TabsContent value="simple" className="space-y-4 mt-4">
+                    <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+                      <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                        <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                        Simple Mode Features
+                      </h3>
+                      <ul className="space-y-2 text-sm text-muted-foreground">
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-600 dark:text-blue-400 mt-1">✓</span>
+                          <span>Clean, distraction-free writing interface (Heidi Scribe)</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-600 dark:text-blue-400 mt-1">✓</span>
+                          <span>Real-time transcription and voice input</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-600 dark:text-blue-400 mt-1">✓</span>
+                          <span>Basic AI writing assistance</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-600 dark:text-blue-400 mt-1">✓</span>
+                          <span>Quick note generation and formatting</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-600 dark:text-blue-400 mt-1">✓</span>
+                          <span>Patient hub and demographics management</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-blue-600 dark:text-blue-400 mt-1">✓</span>
+                          <span>Optional patient linking</span>
+                        </li>
+                      </ul>
+                      <div className="mt-4 p-3 bg-info/10 border border-info/20 rounded text-sm text-muted-foreground">
+                        <p className="font-medium mb-1">Perfect for:</p>
+                        <p>Quick notes, personal documentation, and users who prefer a minimalist interface with optional patient linking.</p>
                       </div>
                     </div>
                   </TabsContent>

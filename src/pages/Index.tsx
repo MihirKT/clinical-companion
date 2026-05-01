@@ -21,6 +21,13 @@ const Index = () => {
     }
   }, [userRole, currentStep, setCurrentStep]);
 
+  // Redirect simple users from patient-hub to capture if needed
+  React.useEffect(() => {
+    if (userRole === 'simple' && currentStep === 'demographics') {
+      setCurrentStep('capture');
+    }
+  }, [userRole, currentStep, setCurrentStep]);
+
   const renderStep = () => {
     // AI-only users cannot access patient-hub
     if (userRole === 'ai-only' && currentStep === 'patient-hub') {
@@ -35,8 +42,8 @@ const Index = () => {
       case 'summarize':
         return <SummarizePage />;
       case 'patient-hub':
-        // Only full users can access patient hub
-        return userRole === 'full' ? <PatientHubPage /> : <CapturePage />;
+        // Full and Simple users can access patient hub
+        return (userRole === 'full' || userRole === 'simple') ? <PatientHubPage /> : <CapturePage />;
       case 'demographics':
         return <PatientDemographicsPage />;
       case 'corrections':

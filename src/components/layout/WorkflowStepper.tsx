@@ -140,7 +140,7 @@ export function WorkflowStepper() {
               <div className="text-xs lg:text-sm">
                 <p className="font-medium text-foreground">{userName}</p>
                 <p className="text-muted-foreground capitalize">
-                  {userRole === 'ai-only' ? 'AI Only' : 'Full Access'}
+                  {userRole === 'ai-only' ? 'AI Only' : userRole === 'simple' ? 'Simple Mode' : 'Full Access'}
                 </p>
               </div>
             </div>

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
-export type UserRole = 'full' | 'ai-only';
+export type UserRole = 'full' | 'ai-only' | 'simple';
 
 interface AuthContextType {
   isAuthenticated: boolean;
